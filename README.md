@@ -1,4 +1,4 @@
-# polnet:  A Statistical Analysis of Lobbying Networks
+# polnet:  A Statistical Analysis of Political Networks
 [![Build Status](https://travis-ci.org/insongkim/wfe.svg?branch=master)](https://travis-ci.org/insongkim/polnet)
 <!-- [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/wfe)](https://cran.r-project.org/package=wfe) -->
 
