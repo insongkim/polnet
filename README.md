@@ -37,9 +37,7 @@ This example uses randomly generated poisson data:
 ```r
 #Load polnet package
 datmat = matrix(rpois(500, 1), ncol = 10)
-lnsmR = LSNM(edges = datmat, D = 2, N_row = 50, N_col = 10)
+lnsmR = LSNM(edges = datmat, D = 2)
  ```
  - `edges` is the matrix of connection strength data, a matrix or an object coercible to a matrix by `as.matrix()`
  -   `D` is the dimensionality of the latent space model, defaults to 2
- - `N_row` is the number of rows in the matrix of connection data, an integer, defaults to the number of rows in the edge matrix
- - `N_col` is the number of columns in the matrix of connection data, an integer, defaults to the number of columns in the edge matrix
