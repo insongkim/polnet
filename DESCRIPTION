@@ -1,6 +1,6 @@
-Package: lmem
+Package: polnet
 Type: Package
-Title: Bayesian Normal Model
+Title: Mapping Political Communities: A Statistical Analysis of Lobbying Networks in Legislative Politics
 Version: 1.0
 Date: 2018-01-08
 Authors@R: c(person("In", "Song", "Kim", email = "insong@mit.edu", role = c("aut, "cre)),
