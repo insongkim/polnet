@@ -44,7 +44,7 @@ stan::io::program_reader prog_reader__() {
     return reader;
 }
 
-#include <meta_header.hpp>
+//#include <meta_header.hpp>
  class model_lmem : public prob_grad {
 private:
     int n;
@@ -198,7 +198,7 @@ public:
             b(j1__) = vals_r__[pos__++];
         try {
             writer__.vector_unconstrain(b);
-        } catch (const std::exception& e) { 
+        } catch (const std::exception& e) {
             throw std::runtime_error(std::string("Error transforming variable b: ") + e.what());
         }
 
@@ -211,7 +211,7 @@ public:
         sigma = vals_r__[pos__++];
         try {
             writer__.scalar_unconstrain(sigma);
-        } catch (const std::exception& e) { 
+        } catch (const std::exception& e) {
             throw std::runtime_error(std::string("Error transforming variable sigma: ") + e.what());
         }
 
