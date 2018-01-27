@@ -44,7 +44,6 @@ stan::io::program_reader prog_reader__() {
     return reader;
 }
 
-//#include <meta_header.hpp>
  class model_lmem : public prob_grad {
 private:
     int n;
