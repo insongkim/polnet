@@ -7,7 +7,7 @@ the Latent Space Network Model (LSNM) developed by Kim and Kunisky (2018).
 
 Authors
 -------------------------
-[In Song Kim](http://web.mit.edu/insong/www/), [Dmitry Kunisky](filler.com), Jacob Jaffe
+[In Song Kim](http://web.mit.edu/insong/www/), [Dmitry Kunisky], Jacob Jaffe
 
 Paper
 -------------------------

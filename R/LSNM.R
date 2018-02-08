@@ -9,7 +9,7 @@
 #'@import methods
 #'@import rstantools
 #'@import rstan
-#'@useDynLib LSNM, .registration = TRUE
+#'@useDynLib polnet, .registration = TRUE
 #'@export
 LSNM <- function(edges, D = 2, ...){
   #model frame
