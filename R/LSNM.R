@@ -1,6 +1,4 @@
-
-#Choosing to not include N_row and N_col as parameters to R function
-
+#'@name LSNM
 #'@param edges Matrix of connection strengths as counts
 #'@param D The dimensionality of the latent space, 2 dimensions is recommended
 #'@return A trained stanmodel object

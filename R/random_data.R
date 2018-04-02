@@ -1,5 +1,3 @@
-
-
 #'@param D The dimensionality of the latent space, 2 dimensions is recommended
 #'@param clients The number of clients 
 #'@param legislators The number of legislators
