@@ -3,7 +3,7 @@
 <!-- [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/wfe)](https://cran.r-project.org/package=wfe) -->
 
 This R package provides a computationally efficient way of fitting
-the Latent Space Network Model (LSNM) developed by Kim and Kunisky (2018).
+the Latent Space Network Model (LSNM) and bipartite Link Community Model (biLCM) developed by Kim and Kunisky (2018).
 
 Authors
 -------------------------
@@ -16,7 +16,7 @@ Paper
 Installation
  -------------------------
 
-There is currently no package available for the LNSM model on CRAN. It is possible to download the package through GitHub instead.
+There is currently no package available for the LNSM or biLCM models on CRAN. It is possible to download the package through GitHub instead.
 
 First, make sure the `devtools` package is installed.
 ``` r
@@ -41,3 +41,19 @@ lnsmR = LSNM(edges = datmat, D = 2)
  ```
  - `edges` is the matrix of connection strength data, a matrix or an object coercible to a matrix by `as.matrix()`
  -   `D` is the dimensionality of the latent space model, defaults to 2
+
+One can also use the built-in functions `random_LSNM_data` and `random_biLCM_data` to generate data based off of known parameters. For example,
+
+```r
+# Load polnet package
+comData = random_biLCM_data(m = 10, n = 7, k = 4)
+biLCMR = biLCM(A = comData[A_mat], m = 10, n = 7, k = 4)
+```
+- `m` is the number of clients
+- `n` is the number of politicians
+- `k` is the number of link communities
+- `A` is the matrix of connection strength data
+
+Test data, describing the House of Representative voting records of the 115th Congress, is also included
+in this package. With politicians and bills making up the two different groups, this dataset can
+be subject to LSNM and biLCM analysis.

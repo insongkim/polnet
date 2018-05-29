@@ -15,7 +15,8 @@ converge <- .000001
 
 # Initializes variables
 
-q <- array(1, c(m,n,k)) kappa <- array(runif(k, min = 1, max = 10), k)
+q <- array(1, c(m,n,k)) 
+kappa <- array(runif(k, min = 1, max = 10), k)
 alpha <-  array(runif(m*k, min = 1, max = 10), c(m,k))
 for (z in 1:k){
 	alpha[, z] <- alpha[, z]/sum(alpha[, z])
