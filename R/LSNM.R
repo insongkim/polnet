@@ -22,8 +22,6 @@
 #' @import methods
 #' @import rstantools
 #' @import rstan
-#' @importFrom rstan vb
-#' @importFrom rstan sampling
 #' @useDynLib polnet, .registration = TRUE
 #' @export
 LSNM <- function(edges,
