@@ -38,9 +38,6 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 
-#Travis-ci
-*.travis.yml
-
 # Executables
 *.exe
 *.out
