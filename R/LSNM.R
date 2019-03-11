@@ -10,12 +10,20 @@
 #' variable in the \code{edges} data.frame. It is required in the case of data.frame.
 #' @param count.id A character string indicating the name of count identifier
 #' variable in the \code{edges} data.frame. The variable must be numeric.
+#' @param N_fixed_row
+#' @param N_fixed_col
+#' @param fixed_row_index
+#' @param fixed_row_embedding
+#' @param fixed_col_index
+#' @param fixed_col_embedding
 #' @return A trained stanmodel object
 
 #' @import Rcpp
 #' @import methods
 #' @import rstantools
 #' @import rstan
+#' @importFrom rstan vb
+#' @importFrom rstan sampling
 #' @useDynLib polnet, .registration = TRUE
 #' @export
 LSNM <- function(edges,
@@ -110,6 +118,7 @@ summary.LSNM <- function(LSNM_Object,
 #'
 #' @param LSNM_Object A trained object of class LSNM
 #' @return a plot of the posterior means
+#' @useDynLib polnet, .registration = TRUE
 #' @export
 
 plot.LSNM <- function(LSNM_Object,
