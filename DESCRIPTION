@@ -1,12 +1,14 @@
 Package: polnet
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Type: Package
+Title: Mapping Political Communities: A Statistical Analysis of Lobbying Networks in Legislative Politics
+Version: 1.0
+Date: 2018-03-12
 Authors@R: 
     person(given = "First",
            family = "Last",
            role = c("aut", "cre"),
            email = "first.last@example.com")
-Description: What the package does (one paragraph).
+Description: This package implements a Bayesian NUTS algorithm for modelling the latent space in poisson connection data.
 License: GPL (>=3)
 Depends: 
     methods,
