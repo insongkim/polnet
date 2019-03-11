@@ -21,6 +21,7 @@ src/stan_files/*.hpp
 
 # RStudio files
 .Rproj.user/
+*.Rproj
 
 # produced vignettes
 vignettes/*.html
@@ -68,4 +69,3 @@ $RECYCLE.BIN/
 
 ### Mac ###
 .DS_Store
-.Rproj.user
