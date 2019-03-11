@@ -56,7 +56,7 @@ LSNM <- function(edges,
   if (class(edges)=="matrix") {
     edge_mat <- edges
   } else {
-    edge_mat <- matrix(data = edge$count.id, nrow = nrow(edges), ncol = ncol(edges))
+    edge_mat <- matrix(data = edges$count.id, nrow = nrow(edges), ncol = ncol(edges))
     rownames(edge_mat) <- edges$group1
     colnames(edge_mat) <- edges$group2
   }
