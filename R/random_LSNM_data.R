@@ -15,7 +15,7 @@
 
 #'@import MASS
 #'@useDynLib polnet, .registration = TRUE
-#'@export
+#'@export random_LSNM_data
 
 
 random_LSNM_data <- function(D,
