@@ -23,7 +23,7 @@
 #' @import rstantools
 #' @import rstan
 #' @useDynLib polnet, .registration = TRUE
-#' @export
+#' @export LSNM
 LSNM <- function(edges,
                  D = 2,
                  method = c("vi", "mcmc"),
