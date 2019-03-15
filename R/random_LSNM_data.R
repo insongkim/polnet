@@ -222,19 +222,17 @@ compare.LSNM <- function(LSNM_Object,
 
 #'@useDynLib polnet, .registration = TRUE
 #'@export
-#' @examples \dontrun{
-#' sim.data <- random_LSNM_data_cluster(n.cluster=4, group1.center=rbind(c(-0.5,-1), c(-1, 0.3), c(0.4, 1), c(0.2, -0.2))*5,
-#' group2.center=rbind(c(-0.5,-1), c(-1, 0.3), c(0.4, 1), c(0.2, -0.2))*5, v=3,
-#' sigma_sq_L = 0.5, sigma_sq_P = 0.7, tau=c(0.5, 0.8))
-#' res <- LSNM(sim.data$LSNM_data$A, D=2, cores=7, warmup=2000, iter=4000, control = list(max_treedepth = 20))
-#' plot.compare.LSNM(res, sim.data$LSNM_data$Theta, sim.data$LSNM_data$Psi, sim.data$group1.popularity, sim.data$group2.popularity)
-#' }
+
 
 plot.compare.LSNM <- function(LSNM_Object,
                               client_space,
                               legislator_space,
                               client_popularity,
-                              legislator_popularity, ...){
+                              legislator_popularity,
+                              main = "Estimated LSNM Positions",
+                              legend = c("Group1", "Group2"),
+                              legend_position = "topleft",
+                              ...){
   D <- ifelse(is.null(ncol(client_space)),1,2) # number of dimensions
   m <- length(client_space)/D
   n <- length(legislator_space)/D
@@ -281,7 +279,7 @@ plot.compare.LSNM <- function(LSNM_Object,
            cex = col_size,
            col = rgb(0,0,0,alpha=0.8))
 
-    plot.LSNM(LSNM_Object)
+    plot.LSNM(LSNM_Object, main, legend, legend_position, ...)
   }
 
 }
