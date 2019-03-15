@@ -20,7 +20,7 @@ Imports:
     MASS (>= 7.3-51.1)
 LinkingTo: 
     BH (>= 1.69.0-1),
-    Rcpp (>= 1.0.0),
+    Rcpp,
     RcppEigen (>= 0.3.3.5.0),
     rstan (>= 2.18.2),
     StanHeaders (>= 2.18.1)
