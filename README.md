@@ -6,7 +6,7 @@ the Latent Space Network Model (LSNM) and bipartite Link Community Model (biLCM)
 
 Authors
 -------------------------
-[In Song Kim](http://web.mit.edu/insong/www/), Dmitriy Kunisky, Jacob Jaffe, Sean (Shiyao) Liu, [Sooahn Shin](http://sooahnshin.com/)
+[In Song Kim](http://web.mit.edu/insong/www/), Dmitriy Kunisky, Sean (Shiyao) Liu, [Sooahn Shin](http://sooahnshin.com/)
 
 Paper
 -------------------------
