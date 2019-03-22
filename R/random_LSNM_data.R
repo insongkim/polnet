@@ -189,7 +189,9 @@ random_LSNM_data_cluster <- function(n.cluster=4,
                    group2.cor=group2.cor, D=D, group1.center=group1.center,
                    group2.center=group2.center, group1=group1,
                    group2=group2, Sigma=Sigma, tau=tau, v=v, sigma_sq_L = sigma_sq_L,
-                   sigma_sq_P = sigma_sq_P)
+                   sigma_sq_P = sigma_sq_P,
+                   group1.cluster = rep(1:n.cluster, group1.division),
+                   group2.cluster = rep(1:n.cluster, group2.division))
 }
 
 #'@param LSNM_Object A trained object of class LSNM
@@ -218,6 +220,8 @@ compare.LSNM <- function(LSNM_Object,
 #'@param group2_space A matrix representing the true latent group2 space. This matrix should have rows equal to the number of group2, and columns equal to the dimensionality of the latent space, D.
 #'@param group1_popularity The group1 popularity factors used to account for baseline likelihood to lobby. Expecting a group1 length vector. Assumed to be drawn from a normal distribution. An optional argument, but must specify this or v and sigma_sq_L
 #'@param group2_popularity The group2 popularity factors used to account for baseline likelihood to sponsor bills. Expecting a group2 length vector. Assumed to be drawn from a normal distribution with mean 0. An optional argument, but must specify this or sigma_sq_P
+#'@param group1_cluster A vector representing the true cluster of group1
+#'@param group2_cluster A vector representing the true cluster of group2
 #'@return Two plots: true latent space and estimated LSNM positions
 
 #'@useDynLib polnet, .registration = TRUE
@@ -229,6 +233,8 @@ plot.compare.LSNM <- function(LSNM_Object,
                               group2_space,
                               group1_popularity,
                               group2_popularity,
+                              group1_cluster = NULL,
+                              group2_cluster = NULL,
                               main = "Estimated LSNM Positions",
                               legend = c("Group1", "Group2"),
                               legend_position = "topleft",
@@ -236,6 +242,12 @@ plot.compare.LSNM <- function(LSNM_Object,
   D <- ifelse(is.null(ncol(group1_space)),1,2) # number of dimensions
   m <- length(group1_space)/D
   n <- length(group2_space)/D
+
+  group1_col <- group1_cluster
+  group2_col <- group2_cluster
+
+  if (is.null(group1_col)) group1_col <- rep("black", m)
+  if (is.null(group2_col)) group2_col <- rep("black", n)
 
   if (D==1) {
     df_fit <- as.data.frame(LSNM_Object$stan_fitted_model)
@@ -251,12 +263,13 @@ plot.compare.LSNM <- function(LSNM_Object,
          cex = 1,
          xlab = "Estimate Dimension 1",
          ylab = "True Dimension 1",
-         yaxt = "n", ...)
+         yaxt = "n",
+         col = group1_col,...)
     points(x = col_elements,
            y = group2_space,
-           pch = 16,
+           pch = 0,
            cex = 1,
-           col = rgb(0,0,0,alpha=0.8))
+           col = group2_col)
 
   } else {
     row_size <- exp(group1_popularity) # size of group1
@@ -272,14 +285,15 @@ plot.compare.LSNM <- function(LSNM_Object,
          cex = row_size,
          xlab = "Latent Space Dimension 1",
          ylab = "Latent Space Dimension 2",
-         main = "True Latent Space", ...)
+         main = "True Latent Space",
+         col = group1_col, ...)
     points(x = group2_space[,1],
            y = group2_space[,2],
-           pch = 16,
+           pch = 0,
            cex = col_size,
-           col = rgb(0,0,0,alpha=0.8))
+           col = group2_col)
 
-    plot.LSNM(LSNM_Object, main, legend, legend_position, ...)
+    plot.LSNM(LSNM_Object, group1_cluster, group2_cluster, main, legend, legend_position, ...)
   }
 
 }

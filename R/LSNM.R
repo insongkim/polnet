@@ -25,11 +25,10 @@
 #' @useDynLib polnet, .registration = TRUE
 #' @export LSNM
 #' @examples \dontrun{
-#' sim.data <- random_LSNM_data_cluster(n.cluster=4, group1.center=rbind(c(-0.5,-1), c(-1, 0.3), c(0.4, 1), c(0.2, -0.2))*5,
-#' group2.center=rbind(c(-0.5,-1), c(-1, 0.3), c(0.4, 1), c(0.2, -0.2))*5, v=3,
-#' sigma_sq_L = 0.5, sigma_sq_P = 0.7, tau=c(0.5, 0.8))
+#' set.seed(11)
+#' sim.data <- random_LSNM_data_cluster(n.cluster=4, group1.center=rbind(c(-0.5,-1), c(-1, 0.3), c(0.4, 1), c(0.2, -0.2))*5, group2.center=rbind(c(-0.5,-1), c(-1, 0.3), c(0.4, 1), c(0.2, -0.2))*5, v=3, sigma_sq_L = 0.5, sigma_sq_P = 0.7, tau=c(0.5, 0.8))
 #' res <- LSNM(sim.data$LSNM_data$A, D=2, method = "vi", iter=50000)
-#' plot.compare.LSNM(res, sim.data$LSNM_data$Theta, sim.data$LSNM_data$Psi, sim.data$group1.popularity, sim.data$group2.popularity, legend_position = "center")
+#' plot.compare.LSNM(res, sim.data$LSNM_data$Theta, sim.data$LSNM_data$Psi, sim.data$group1.popularity, sim.data$group2.popularity, sim.data$group1.cluster, sim.data$group2.cluster, legend_position = "center")
 #' }
 #'
 LSNM <- function(edges,
@@ -123,11 +122,15 @@ summary.LSNM <- function(LSNM_Object,
 #' Use standard arguments to the \code{plot} function to modify the plot as needed.
 #'
 #' @param LSNM_Object A trained object of class LSNM
+#' @param group1_cluster A vector representing the cluster of group1
+#' @param group2_cluster A vector representing the cluster of group2
 #' @return a plot of the posterior means
 #' @useDynLib polnet, .registration = TRUE
 #' @export
 
 plot.LSNM <- function(LSNM_Object,
+                      group1_cluster = NULL,
+                      group2_cluster = NULL,
                       main = "Estimated LSNM Positions",
                       legend = c("Group1", "Group2"),
                       legend_position = "topleft",
@@ -136,6 +139,9 @@ plot.LSNM <- function(LSNM_Object,
   m <- LSNM_Object$stan_fitted_model@par_dims$row_factor # number of group1
   n <- LSNM_Object$stan_fitted_model@par_dims$col_factor # number of group2
   D <- LSNM_Object$stan_fitted_model@par_dims$mu_col_embedding # number of dimensions
+
+  if (is.null(group1_cluster)) group1_cluster <- rep("black", m)
+  if (is.null(group2_cluster)) group2_cluster <- rep("black", n)
 
   df_fit <- as.data.frame(LSNM_Object$stan_fitted_model)
   nms <- df_fit[ , grepl( "^col_embedding|^row_embedding|^col_factor|^row_factor" , names(df_fit) )]
@@ -168,22 +174,22 @@ plot.LSNM <- function(LSNM_Object,
          xlab = "Latent Space Dimension 1",
          ylab = "",
          yaxt = "n",
-         main = main, ...)
+         main = main,
+         col = group1_cluster,...)
     axis(side = 2,
          at = row_ord,
          labels = row_lab)
     points(x = col_pos,
            y = col_ord,
-           pch = 16,
+           pch = 0,
            cex = col_size,
-           col = rgb(0,0,0,alpha=0.8))
+           col = group2_cluster)
     axis(side = 4,
          at = col_ord,
          labels = col_lab)
     legend(legend_position,
            legend = legend,
-           pch = c(1, 16),
-           col = c("black", rgb(0,0,0,alpha=0.8)),
+           pch = c(1, 0),
            cex = 0.8,
            box.lty = 0,
            inset = 0.01)
@@ -201,16 +207,16 @@ plot.LSNM <- function(LSNM_Object,
          cex = row_size,
          xlab = "Latent Space Dimension 1",
          ylab = "Latent Space Dimension 2",
-         main = main, ...)
+         main = main,
+         col = group1_cluster,...)
     points(x = plot.data[paste0("col_embedding[",1:n,",1]")],
            y = plot.data[paste0("col_embedding[",1:n,",2]")],
-           pch = 16,
+           pch = 0,
            cex = col_size,
-           col = rgb(0,0,0,alpha=0.8))
+           col = group2_cluster)
     legend(legend_position,
            legend = legend,
-           pch = c(1, 16),
-           col = c("black", rgb(0,0,0,alpha=0.8)),
+           pch = c(1, 0),
            cex = 0.8,
            box.lty = 0,
            inset = 0.01)
