@@ -1,17 +1,17 @@
 #'@param D The dimensionality of the latent space, 2 dimensions is recommended
 #'@param group1 The number of group1
 #'@param group2 The number of group2
-#'@param client_space The desired latent space positions of the group1. Expecting a matrix with group1 rows and D columns. Assumed to be drawn from a multivariate normal distribution with a mean of 0. An optional argument, but must specify this or tau.
-#'@param legislator_space The desired latent space positions of the group2. Expecting a matrix with group2 rows and D columns. Assumed to be drawn from a multivariate normal distribution. An optional argument, but must specifiy this or mu and Sigma.
-#'@param mu The mean vector to generate legislator_space. Expecting a vector of length D. An optional argument, required if missing legislator_space.
-#'@param Sigma The variance-covariance matrix used to generate legislator_space. Expecting a D by D matrix with a reasonable variance-covariance structure. An optional argument, required if missing legislator_space.
-#'@param tau The variance-covariance matrix used to generate client_space. Expecting a D by D matrix with a diagonal variance-covariance structure. An optional argument, required if missing client_space.
-#'@param alpha_popularity The client popularity factors used to account for baseline likelihood to lobby. Expecting a group1 length vector. Assumed to be drawn from a normal distribution. An optional argument, but must specify this or v and sigma_sq_L
-#'@param Beta_popularity The legislator popularity factors used to account for baseline likelihood to sponsor bills. Expecting a group2 length vector. Assumed to be drawn from a normal distribution with mean 0. An optional argument, but must specify this or sigma_sq_P
+#'@param group1_space The desired latent space positions of the group1. Expecting a matrix with group1 rows and D columns. Assumed to be drawn from a multivariate normal distribution with a mean of 0. An optional argument, but must specify this or tau.
+#'@param group2_space The desired latent space positions of the group2. Expecting a matrix with group2 rows and D columns. Assumed to be drawn from a multivariate normal distribution. An optional argument, but must specifiy this or mu and Sigma.
+#'@param mu The mean vector to generate group2_space. Expecting a vector of length D. An optional argument, required if missing group2_space.
+#'@param Sigma The variance-covariance matrix used to generate group2_space. Expecting a D by D matrix with a reasonable variance-covariance structure. An optional argument, required if missing group2_space.
+#'@param tau The variance-covariance matrix used to generate group1_space. Expecting a D by D matrix with a diagonal variance-covariance structure. An optional argument, required if missing group1_space.
+#'@param alpha_popularity The group1 popularity factors used to account for baseline likelihood to lobby. Expecting a group1 length vector. Assumed to be drawn from a normal distribution. An optional argument, but must specify this or v and sigma_sq_L
+#'@param Beta_popularity The group2 popularity factors used to account for baseline likelihood to sponsor bills. Expecting a group2 length vector. Assumed to be drawn from a normal distribution with mean 0. An optional argument, but must specify this or sigma_sq_P
 #'@param v The mean used to generate the alpha_popularity vector. An optional argument, required if missing alpha_popularity
 #'@param sigma_sq_L The variance used to generate the alpha_popularity vector. An optional argument, required if missing alpha_popularity
 #'@param sigma_sq_P The variance used to generate the Beta_popularity vector. An optional argument, required if missing Beta_popularity
-#'@return A list of the latent client space, the latent legislator space, and then the randomly generated poisson count matrix A.
+#'@return A list of the latent group1 space, the latent group2 space, and then the randomly generated poisson count matrix A.
 
 #'@import MASS
 #'@useDynLib polnet, .registration = TRUE
@@ -21,8 +21,8 @@
 random_LSNM_data <- function(D,
                              group1,
                              group2,
-                             client_space = NULL,
-                             legislator_space = NULL,
+                             group1_space = NULL,
+                             group2_space = NULL,
                              mu = NULL,
                              Sigma = NULL,
                              tau = NULL,
@@ -48,28 +48,28 @@ random_LSNM_data <- function(D,
   }
   #putting together matrix of alpha + Beta
   a_B = outer(alpha_popularity, Beta_popularity, '+')
-  if(is.null(client_space)){
+  if(is.null(group1_space)){
     if(is.null(tau)){
       stop('Invalid Theta Parameters')
     }else{
       if(!all(tau[lower.tri(tau)] == 0, tau[upper.tri(tau)] == 0)){
         stop('Tau covariance matrixmust be diagonal')
       }
-      client_space = mvrnorm(n = group1, mu = rep(0, D), Sigma = tau)
+      group1_space = mvrnorm(n = group1, mu = rep(0, D), Sigma = tau)
     }
   }
-  if(is.null(legislator_space)){
+  if(is.null(group2_space)){
     if(is.null(mu) | is.null(Sigma)){
       stop('Invalid Psi Parameters')
     }else{
-      legislator_space = mvrnorm(n = group2, mu = mu, Sigma = Sigma)
+      group2_space = mvrnorm(n = group2, mu = mu, Sigma = Sigma)
     }
   }
-  if (D>=2) distances = outer(split(client_space, row(client_space)), split(legislator_space, row(legislator_space)), Vectorize(l2_norm))
-	else distances = outer(client_space, legislator_space, Vectorize(l2_norm))
+  if (D>=2) distances = outer(split(group1_space, row(group1_space)), split(group2_space, row(group2_space)), Vectorize(l2_norm))
+	else distances = outer(group1_space, group2_space, Vectorize(l2_norm))
   diff_vec = a_B - distances
   A_mat = matrix(sapply(as.vector(diff_vec), function(x) rpois(1, exp(x))), nrow = nrow(distances))
-  return(list(Theta = client_space, Psi = legislator_space, A = A_mat))
+  return(list(Theta = group1_space, Psi = group2_space, A = A_mat))
 }
 
 
@@ -180,8 +180,8 @@ random_LSNM_data_cluster <- function(n.cluster=4,
 
 
   # Call existing function
-  LSNM_data <- random_LSNM_data(D=D, group1=group1, group2 = group2, client_space = group1.cor[,-(D+1)],
-                                legislator_space = group2.cor[,-(D+1)], alpha_popularity = group1.popularity,
+  LSNM_data <- random_LSNM_data(D=D, group1=group1, group2 = group2, group1_space = group1.cor[,-(D+1)],
+                                group2_space = group2.cor[,-(D+1)], alpha_popularity = group1.popularity,
                                 Beta_popularity = group2.popularity)
 
   # return
@@ -193,8 +193,8 @@ random_LSNM_data_cluster <- function(n.cluster=4,
 }
 
 #'@param LSNM_Object A trained object of class LSNM
-#'@param client_space A matrix representing the true latent client space. This matrix should have rows equal to the number of group1, and columns equal to the dimensionality of the latent space, D.
-#'@param legislator_space A matrix representing the true latent legislator space. This matrix should have rows equal to the number of group2, and columns equal to the dimensionality of the latent space, D.
+#'@param group1_space A matrix representing the true latent group1 space. This matrix should have rows equal to the number of group1, and columns equal to the dimensionality of the latent space, D.
+#'@param group2_space A matrix representing the true latent group2 space. This matrix should have rows equal to the number of group2, and columns equal to the dimensionality of the latent space, D.
 #'@return Does not return an object. Prints the proportion of latent space estimates that fell within the credible interval as well as the average error from the true latent space estimates.
 #'
 
@@ -203,21 +203,21 @@ random_LSNM_data_cluster <- function(n.cluster=4,
 
 
 compare.LSNM <- function(LSNM_Object,
-                         client_space,
-                         legislator_space){
+                         group1_space,
+                         group2_space){
   lsnmobj <- summary.LSNM(LSNM_Object)
   l_ordered <- lsnmobj[order(rownames(lsnmobj)), ]
-  tru_pars <- c(as.vector(t(client_space)), as.vector(t(legislator_space)))
+  tru_pars <- c(as.vector(t(group1_space)), as.vector(t(group2_space)))
   perc_in_cred <- sum(tru_pars < l_ordered$`90%` & tru_pars > l_ordered$`10%`) / length(tru_pars)
   ave_marg_error <- mean(abs(l_ordered$Mean - tru_pars))
   paste0('A proportion of ', perc_in_cred, 'of latent space parameters fell within their credible interval for an average error of ', ave_marg_error)
 }
 
 #'@param LSNM_Object A trained object of class LSNM
-#'@param client_space A matrix representing the true latent client space. This matrix should have rows equal to the number of group1, and columns equal to the dimensionality of the latent space, D.
-#'@param legislator_space A matrix representing the true latent legislator space. This matrix should have rows equal to the number of group2, and columns equal to the dimensionality of the latent space, D.
-#'@param client_popularity The client popularity factors used to account for baseline likelihood to lobby. Expecting a group1 length vector. Assumed to be drawn from a normal distribution. An optional argument, but must specify this or v and sigma_sq_L
-#'@param legislator_popularity The legislator popularity factors used to account for baseline likelihood to sponsor bills. Expecting a group2 length vector. Assumed to be drawn from a normal distribution with mean 0. An optional argument, but must specify this or sigma_sq_P
+#'@param group1_space A matrix representing the true latent group1 space. This matrix should have rows equal to the number of group1, and columns equal to the dimensionality of the latent space, D.
+#'@param group2_space A matrix representing the true latent group2 space. This matrix should have rows equal to the number of group2, and columns equal to the dimensionality of the latent space, D.
+#'@param group1_popularity The group1 popularity factors used to account for baseline likelihood to lobby. Expecting a group1 length vector. Assumed to be drawn from a normal distribution. An optional argument, but must specify this or v and sigma_sq_L
+#'@param group2_popularity The group2 popularity factors used to account for baseline likelihood to sponsor bills. Expecting a group2 length vector. Assumed to be drawn from a normal distribution with mean 0. An optional argument, but must specify this or sigma_sq_P
 #'@return Two plots: true latent space and estimated LSNM positions
 
 #'@useDynLib polnet, .registration = TRUE
@@ -225,17 +225,17 @@ compare.LSNM <- function(LSNM_Object,
 
 
 plot.compare.LSNM <- function(LSNM_Object,
-                              client_space,
-                              legislator_space,
-                              client_popularity,
-                              legislator_popularity,
+                              group1_space,
+                              group2_space,
+                              group1_popularity,
+                              group2_popularity,
                               main = "Estimated LSNM Positions",
                               legend = c("Group1", "Group2"),
                               legend_position = "topleft",
                               ...){
-  D <- ifelse(is.null(ncol(client_space)),1,2) # number of dimensions
-  m <- length(client_space)/D
-  n <- length(legislator_space)/D
+  D <- ifelse(is.null(ncol(group1_space)),1,2) # number of dimensions
+  m <- length(group1_space)/D
+  n <- length(group2_space)/D
 
   if (D==1) {
     df_fit <- as.data.frame(LSNM_Object$stan_fitted_model)
@@ -246,35 +246,35 @@ plot.compare.LSNM <- function(LSNM_Object,
     col_elements <- plot.data[paste0("col_embedding[",1:n,",1]")]
 
     plot(x = row_elements,
-         y = client_space,
+         y = group1_space,
          pch = 1,
          cex = 1,
          xlab = "Estimate Dimension 1",
          ylab = "True Dimension 1",
          yaxt = "n", ...)
     points(x = col_elements,
-           y = legislator_space,
+           y = group2_space,
            pch = 16,
            cex = 1,
            col = rgb(0,0,0,alpha=0.8))
 
   } else {
-    row_size <- exp(client_popularity) # size of group1
+    row_size <- exp(group1_popularity) # size of group1
     row_size <- 2*row_size/max(row_size)
-    col_size <- exp(legislator_popularity) # size of group2
+    col_size <- exp(group2_popularity) # size of group2
     col_size <- 2*col_size/max(col_size)
 
     par(mfrow=c(1,2))
 
-    plot(x = client_space[,1],
-         y = client_space[,2],
+    plot(x = group1_space[,1],
+         y = group1_space[,2],
          pch = 1,
          cex = row_size,
          xlab = "Latent Space Dimension 1",
          ylab = "Latent Space Dimension 2",
          main = "True Latent Space", ...)
-    points(x = legislator_space[,1],
-           y = legislator_space[,2],
+    points(x = group2_space[,1],
+           y = group2_space[,2],
            pch = 16,
            cex = col_size,
            col = rgb(0,0,0,alpha=0.8))
