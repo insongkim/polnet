@@ -39,6 +39,6 @@ The example of LSNM (with variational inference) using synthetic data is as foll
 library(polnet)
 set.seed(11)
 sim.data <- random_LSNM_data_cluster(n.cluster=4, group1.center=rbind(c(-0.5,-1), c(-1, 0.3), c(0.4, 1), c(0.2, -0.2))*5, group2.center=rbind(c(-0.5,-1), c(-1, 0.3), c(0.4, 1), c(0.2, -0.2))*5, v=3, sigma_sq_L = 0.5, sigma_sq_P = 0.7, tau=c(0.5, 0.8))
-res <- LSNM(sim.data$LSNM_data$A, D=2, iter=50000)
+res <- LSNM(sim.data$LSNM_data$A, D=2, method = "vi", iter=50000)
 plot.compare.LSNM(res, sim.data$LSNM_data$Theta, sim.data$LSNM_data$Psi, sim.data$group1.popularity, sim.data$group2.popularity, legend_position = "center")
 ```
