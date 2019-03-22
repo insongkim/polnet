@@ -81,6 +81,10 @@ l2_norm <- function(vec1, vec2){
   return(sqrt(sum((vec1 - vec2)^2)))
 }
 
+l2_norm.sq <- function(vec1, vec2){
+  return(sum((vec1 - vec2)^2))
+}
+
 #'@param m
 #'@param n
 #'@param k
