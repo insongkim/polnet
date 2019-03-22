@@ -42,4 +42,4 @@ sim.data <- random_LSNM_data_cluster(n.cluster=4, group1.center=rbind(c(-0.5,-1)
 res <- LSNM(sim.data$LSNM_data$A, D=2, method = "vi", iter=50000)
 plot.compare.LSNM(res, sim.data$LSNM_data$Theta, sim.data$LSNM_data$Psi, sim.data$group1.popularity, sim.data$group2.popularity, sim.data$group1.cluster, sim.data$group2.cluster, legend_position = "center")
 ```
-![](http://sooahnshin.com/lsnm_short_ex.png)
+![](http://sooahnshin.com/lsnm_short_ex.png|width=100)
