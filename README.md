@@ -1,5 +1,5 @@
 # polnet:  A Statistical Analysis of Political Networks
-[![Build Status](https://travis-ci.org/sooahn/polnet.svg?branch=development)](https://travis-ci.org/sooahn/polnet)
+[![Build Status](https://travis-ci.org/insongkim/polnet.svg?branch=master)](https://travis-ci.org/insongkim/polnet)
 
 This R package provides a computationally efficient way of fitting
 the Latent Space Network Model (LSNM) and bipartite Link Community Model (biLCM) developed by Kim and Kunisky (2018).
