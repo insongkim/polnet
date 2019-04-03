@@ -136,8 +136,8 @@ plot.LSNM <- function(LSNM_Object,
                       legend_position = "topleft",
                       ...){
 
-  m <- LSNM_Object$stan_fitted_model@par_dims$row_factor # number of group1
-  n <- LSNM_Object$stan_fitted_model@par_dims$col_factor # number of group2
+  m <- LSNM_Object$stan_fitted_model@par_dims$row_factor_adj # number of group1
+  n <- LSNM_Object$stan_fitted_model@par_dims$col_factor_adj # number of group2
   D <- LSNM_Object$stan_fitted_model@par_dims$mu_col_embedding # number of dimensions
 
   if (is.null(group1_cluster)) group1_cluster <- rep("black", m)
@@ -148,9 +148,9 @@ plot.LSNM <- function(LSNM_Object,
   plot.data <- colMeans(nms) # posterior mean
 
   if (D==1) {
-    row_size <- exp(plot.data[paste0("row_factor[",1:m,"]")]) # size of group1
+    row_size <- exp(plot.data[paste0("row_factor_adj[",1:m,"]")]) # size of group1
     row_size <- 2*row_size/max(row_size)
-    col_size <- exp(plot.data[paste0("col_factor[",1:n,"]")]) # size of group2
+    col_size <- exp(plot.data[paste0("col_factor_adj[",1:n,"]")]) # size of group2
     col_size <- 2*col_size/max(col_size)
 
     row_elements <- plot.data[paste0("row_embedding[",1:m,",1]")]
@@ -196,9 +196,9 @@ plot.LSNM <- function(LSNM_Object,
 
 
   } else {
-    row_size <- exp(plot.data[paste0("row_factor[",1:m,"]")]) # size of group1
+    row_size <- exp(plot.data[paste0("row_factor_adj[",1:m,"]")]) # size of group1
     row_size <- 2*row_size/max(row_size)
-    col_size <- exp(plot.data[paste0("col_factor[",1:n,"]")]) # size of group2
+    col_size <- exp(plot.data[paste0("col_factor_adj[",1:n,"]")]) # size of group2
     col_size <- 2*col_size/max(col_size)
 
     plot(x = plot.data[paste0("row_embedding[",1:m,",1]")],
