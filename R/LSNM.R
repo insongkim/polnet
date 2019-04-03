@@ -1,5 +1,5 @@
 #' @name LSNM
-#' @param edges Matrix or data.frame of connection strengths as counts
+#' @param edges Matrix or data.frame or igraph of connection strengths as counts
 #' @param D The dimensionality of the latent space, 2 dimensions is recommended
 #' @param method One of \code{vi} (variational inference) or
 #' \code{mcmc} specifying the method of inference. The default is
@@ -22,6 +22,8 @@
 #' @import methods
 #' @import rstantools
 #' @import rstan
+#' @import igraph
+#' @import tidyr
 #' @useDynLib polnet, .registration = TRUE
 #' @export LSNM
 #' @examples \dontrun{
@@ -39,22 +41,22 @@ LSNM <- function(edges,
                  count.id = NULL,
                  N_fixed_row=0,
                  N_fixed_col=0,
-                 fixed_row_index=NULL,
-                 fixed_row_embedding=NULL,
-                 fixed_col_index=NULL,
-                 fixed_col_embedding=NULL,
+                 fixed_row_index=vector(),
+                 fixed_row_embedding=matrix(0, nrow=0, ncol=2),
+                 fixed_col_index=vector(),
+                 fixed_col_embedding=matrix(0, nrow=2, ncol=0),
                  ...){
 
   ## Warning for missing parameter
   if (missing(edges))
     stop("'edges' should be provided")
-  if (!class(edges)%in%c("matrix","data.frame"))
-    stop("'edges' should be either matrix or data.frame")
+  if (!class(edges)%in%c("matrix","data.frame", "igraph"))
+    stop("'edges' should be matrix or data.frame or igraph")
   if (class(edges)=="data.frame"&is.null(group1.id))
     stop("'group1.id' should be provided")
   if (class(edges)=="data.frame"&is.null(group2.id))
     stop("'group2.id' should be provided")
-  if (class(edges)=="data.frame"&is.null(count.id))
+  if (class(edges)%in%c("data.frame", "igraph")&is.null(count.id))
     stop("'count.id' should be provided")
   if (!method %in% c("vi","mcmc"))
     stop("'method' should be either 'vi' or 'mcmc'")
@@ -63,14 +65,26 @@ LSNM <- function(edges,
   if (class(edges)=="matrix") {
     edge_mat <- edges
   } else {
-    edge_mat <- matrix(data = edges$count.id, nrow = nrow(edges), ncol = ncol(edges))
-    rownames(edge_mat) <- edges$group1.id
-    colnames(edge_mat) <- edges$group2.id
-  }
-
+    
+    if (class(edges)=="igraph") {
+      edges <- igraph::as_data_frame(edges, what = "edges")
+      group1.id <- "from"
+      group2.id <- "to"
+    }
+    
+    edges <- edges[,c(group1.id, group2.id, count.id)]
+    edges_mat <- tidyr::spread(edges, group2.id, count.id)
+    rownames(edges_mat) <- edges_mat[,group1.id]
+    edges_mat <- edges_mat[,-1]
+    edges_mat <- as.matrix(edges_mat)
+  } 
+  
   if (method == "vi") {
     # Parameters necessary to run stan function
-    stanlist <- list(edges = edge_mat, D = D, N_row = nrow(edge_mat), N_col = ncol(edge_mat))
+    stanlist <- list(edges = edge_mat, D = D, N_row = nrow(edge_mat), N_col = ncol(edge_mat),
+                     N_fixed_row=N_fixed_row, N_fixed_col=N_fixed_col, fixed_row_index=fixed_row_index,
+                     fixed_row_embedding=fixed_row_embedding, fixed_col_index=fixed_col_index,
+                     fixed_col_embedding=fixed_col_embedding)
     sample_post <- rstan::vb(stanmodels$LSNM, data = stanlist, ...)
   } else {
     # Parameters necessary to run stan function

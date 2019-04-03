@@ -4,11 +4,16 @@
 \alias{plot.LSNM}
 \title{Plot the posterior means of a LSNM object}
 \usage{
-plot.LSNM(LSNM_Object, main = "Estimated LSNM Positions",
-  legend = c("Group1", "Group2"), legend_position = "topleft", ...)
+plot.LSNM(LSNM_Object, group1_cluster = NULL, group2_cluster = NULL,
+  main = "Estimated LSNM Positions", legend = c("Group1", "Group2"),
+  legend_position = "topleft", ...)
 }
 \arguments{
 \item{LSNM_Object}{A trained object of class LSNM}
+
+\item{group1_cluster}{A vector representing the cluster of group1}
+
+\item{group2_cluster}{A vector representing the cluster of group2}
 }
 \value{
 a plot of the posterior means
