@@ -71,7 +71,7 @@ LSNM <- function(edges,
   if (method == "vi") {
     # Parameters necessary to run stan function
     stanlist <- list(edges = edge_mat, D = D, N_row = nrow(edge_mat), N_col = ncol(edge_mat))
-    sample_post <- rstan::vb(stanmodels$LSNMshort, data = stanlist, ...)
+    sample_post <- rstan::vb(stanmodels$LSNM, data = stanlist, ...)
   } else {
     # Parameters necessary to run stan function
     stanlist <- list(edges = edge_mat, D = D, N_row = nrow(edge_mat), N_col = ncol(edge_mat),
@@ -154,7 +154,7 @@ plot.LSNM <- function(LSNM_Object,
     col_size <- 2*col_size/max(col_size)
 
     row_elements <- plot.data[paste0("row_embedding[",1:m,",1]")]
-    col_elements <- plot.data[paste0("col_embedding[",1:n,",1]")]
+    col_elements <- plot.data[paste0("col_embedding[1,",1:n,"]")]
 
 
     positions <- sort(c(row_elements,col_elements))
@@ -209,8 +209,8 @@ plot.LSNM <- function(LSNM_Object,
          ylab = "Latent Space Dimension 2",
          main = main,
          col = group1_cluster,...)
-    points(x = plot.data[paste0("col_embedding[",1:n,",1]")],
-           y = plot.data[paste0("col_embedding[",1:n,",2]")],
+    points(x = plot.data[paste0("col_embedding[1,",1:n,"]")],
+           y = plot.data[paste0("col_embedding[2,",1:n,"]")],
            pch = 0,
            cex = col_size,
            col = group2_cluster)
