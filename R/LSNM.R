@@ -64,8 +64,8 @@ LSNM <- function(edges,
     edge_mat <- edges
   } else {
     edge_mat <- matrix(data = edges$count.id, nrow = nrow(edges), ncol = ncol(edges))
-    rownames(edge_mat) <- edges$group1
-    colnames(edge_mat) <- edges$group2
+    rownames(edge_mat) <- edges$group1.id
+    colnames(edge_mat) <- edges$group2.id
   }
 
   if (method == "vi") {
