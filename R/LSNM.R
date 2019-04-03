@@ -216,6 +216,7 @@ plot.LSNM <- function(LSNM_Object,
            col = group2_cluster)
     legend(legend_position,
            legend = legend,
+           bg = "transparent",
            pch = c(1, 0),
            cex = 0.8,
            box.lty = 0,
