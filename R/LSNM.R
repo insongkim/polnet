@@ -138,7 +138,7 @@ plot.LSNM <- function(LSNM_Object,
 
   m <- LSNM_Object$stan_fitted_model@par_dims$row_factor_adj # number of group1
   n <- LSNM_Object$stan_fitted_model@par_dims$col_factor_adj # number of group2
-  D <- LSNM_Object$stan_fitted_model@par_dims$mu_col_embedding # number of dimensions
+  D <- LSNM_Object$stan_fitted_model@par_dims$cov_embedding_diag # number of dimensions
 
   if (is.null(group1_cluster)) group1_cluster <- rep("black", m)
   if (is.null(group2_cluster)) group2_cluster <- rep("black", n)
