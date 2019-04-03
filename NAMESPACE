@@ -2,6 +2,7 @@
 
 S3method(compare,LSNM)
 export(LSNM)
+export(edges_to_igraph)
 export(plot.LSNM)
 export(plot.compare.LSNM)
 export(random_LSNM_data)
