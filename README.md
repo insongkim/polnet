@@ -40,7 +40,7 @@ sim.data <- random_LSNM_data_cluster(n.cluster=4, group1.center=rbind(c(-0.5,-1)
 res <- LSNM(sim.data$LSNM_data$A, D=2, method = "vi", iter=50000)
 plot.compare.LSNM(res, sim.data$LSNM_data$Theta, sim.data$LSNM_data$Psi, sim.data$group1.popularity, sim.data$group2.popularity, sim.data$group1.cluster, sim.data$group2.cluster, legend_position = "center")
 ```
-![](https://github.com/insongkim/repo-data/blob/master/lsnm_short_ex.png)
+![](https://github.com/insongkim/repo-data/blob/master/polnet/lsnm_short_ex.png)
 
 ### LSNM with MCMC
 
@@ -69,7 +69,7 @@ plot.compare.LSNM(res.vb, sim.data$LSNM_data$Theta,
                   sim.data$group2.popularity, sim.data$group1.cluster, 
                   sim.data$group2.cluster, legend_position = "center")
 ```
-![](https://github.com/insongkim/repo-data/blob/master/lsnm_vb_true.png)
+![](https://github.com/insongkim/repo-data/blob/master/polnet/lsnm_vb_true.png)
 
 We then choose the wildest row and column actors from the posterior estimates from the LSNM model (vi version). The wildest row and column actors are those with the largest/smallest x-coordinates and largest/smallest y-coordinates. By doing so, we can fix 4 row actors and 4 column actors. There is no panacea algorithm that works for all datasets. We will elaborate another possible algorithm to choose row/column actors to fix in a later example.
 
@@ -142,4 +142,4 @@ res <- LSNM(sim.data$LSNM_data$A,
 ```
 
 The following plot compares the MCMC posterior coordinates of actors with their true coordinates.
-![](https://github.com/insongkim/repo-data/blob/master/lsnm_mcmc_true.png)
+![](https://github.com/insongkim/repo-data/blob/master/polnet/lsnm_mcmc_true.png)
