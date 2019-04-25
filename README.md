@@ -5,15 +5,12 @@ This R package provides a computationally efficient way of fitting
 the Latent Space Network Model (LSNM) and bipartite Link Community Model (biLCM) developed by Kim and Kunisky (2018).
 
 ## Authors
--------------------------
 [In Song Kim](http://web.mit.edu/insong/www/), Dmitriy Kunisky, Sean (Shiyao) Liu(https://polisci.mit.edu/people/sean-shiyao-liu), [Sooahn Shin](http://sooahnshin.com/)
 
 ## Paper
--------------------------
 [Mapping Political Communities: A Statistical Analysis of Lobbying Networks in Legislative Politics](http://web.mit.edu/insong/www/pdf/network.pdf)
 
 ## Installation
--------------------------
 
 There is currently no package available for the LNSM or biLCM models on CRAN. It is possible to download the package through GitHub instead.
 
@@ -31,7 +28,6 @@ install_github("insongkim/polnet", dependencies = TRUE, ref = "development")
 ```
 
 ## Examples
--------------------------
 
 ### LSNM with variational inference
 
