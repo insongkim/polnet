@@ -65,8 +65,8 @@ random_LSNM_data <- function(D,
       group2_space = mvrnorm(n = group2, mu = mu, Sigma = Sigma)
     }
   }
-  if (D>=2) distances = outer(split(group1_space, row(group1_space)), split(group2_space, row(group2_space)), Vectorize(l2_norm))
-	else distances = outer(group1_space, group2_space, Vectorize(l2_norm))
+  if (D>=2) distances = outer(split(group1_space, row(group1_space)), split(group2_space, row(group2_space)), Vectorize(l2_norm.sq))
+	else distances = outer(group1_space, group2_space, Vectorize(l2_norm.sq))
   diff_vec = a_B - distances
   A_mat = matrix(sapply(as.vector(diff_vec), function(x) rpois(1, exp(x))), nrow = nrow(distances))
   return(list(Theta = group1_space, Psi = group2_space, A = A_mat))
