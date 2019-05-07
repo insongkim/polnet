@@ -24,7 +24,7 @@ Then, use the `install_github()` function from `devtools` to install the package
 
 ``` r
 library(devtools)
-install_github("insongkim/polnet", dependencies = TRUE, ref = "development")
+install_github("insongkim/polnet", dependencies = TRUE, ref = "master")
 ```
 
 ## Examples
