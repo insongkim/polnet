@@ -111,14 +111,14 @@ LSNM <- function(edges,
                        N_fixed_row=N_fixed_row, N_fixed_col=N_fixed_col, fixed_row_index=fixed_row_index,
                        fixed_row_embedding=fixed_row_embedding, fixed_col_index=fixed_col_index,
                        fixed_col_embedding=fixed_col_embedding)
-      sample_post <- rstan::vb(LSNMbinom, data = stanlist, ...)
+      sample_post <- rstan::vb(stanmodels$LSNMbinom, data = stanlist, ...)
     } else {
       # Parameters necessary to run stan function
       stanlist <- list(edges = edge_mat, D = D, n = n, N_row = nrow(edge_mat), N_col = ncol(edge_mat),
                        N_fixed_row=N_fixed_row, N_fixed_col=N_fixed_col, fixed_row_index=fixed_row_index,
                        fixed_row_embedding=fixed_row_embedding, fixed_col_index=fixed_col_index,
                        fixed_col_embedding=fixed_col_embedding)
-      sample_post <- rstan::sampling(LSNMbinom, data = stanlist, ...)
+      sample_post <- rstan::sampling(stanmodels$LSNMbinom, data = stanlist, ...)
     }
   }
   
