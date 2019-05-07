@@ -298,6 +298,8 @@ plot.compare.LSNM <- function(LSNM_Object,
            col = group2_col)
 
     plot.LSNM(LSNM_Object, group1_cluster, group2_cluster, main, legend, legend_position, ...)
+    
+    par(mfrow=c(1,1))
   }
 
 }
