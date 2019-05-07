@@ -18,22 +18,23 @@ edges_to_igraph <- function(edges,
                             group1.id = NULL,
                             group2.id = NULL,
                             count.id = NULL,
-                            vertices = NULL) {
-  if (class(edges)=="matrix") {
-    edges_mat <- edges
-    
-    if (is.null(rownames(edges_mat))) rownames(edges_mat) <- paste0("G1_",1:nrow(edges_mat))
-    if (is.null(colnames(edges_mat))) colnames(edges_mat) <- paste0("G2_",1:ncol(edges_mat))
-    edges <- as.data.frame(edges_mat)
-    
-    edges_gathered <- tidyr::gather(edges, "group2", "count")
-    edges_gathered$group1 <- rep(rownames(edges),ncol(edges_mat))
-    edges_gathered <- edges_gathered[,c("group1","group2","count")]
-    
-    out <- igraph::graph.data.frame(edges_gathered, directed=F, vertices=vertices)
-  } else {
+                            group1.cluster = NULL,
+                            group2.cluster = NULL) {
+  if (class(edges)=="data.frame") {
     edges <- edges[,c(group1.id, group2.id, count.id)]
-    out <- igraph::graph.data.frame(edges_gathered, directed=F, vertices=vertices)
+    edges <- tidyr::spread(edges, group2.id, count.id)
+    rownames(edges) <- edges[,group1.id]
+    edges <- edges[,-1]
+    edges <- as.matrix(edges)
   }
-  return(out)
+  g <- igraph::graph_from_incidence_matrix(edges, directed=F)
+
+  if (!is.null(group1.cluster)) {
+    V(g)$cluster[V(g)$type==F] <- group1.cluster
+  }
+  if (!is.null(group2.cluster)) {
+    V(g)$cluster[V(g)$type==T] <- group2.cluster
+  }
+    
+  return(g)
 }
