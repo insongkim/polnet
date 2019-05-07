@@ -15,7 +15,7 @@
 
 data {
   int<lower=1> D;     // dimension of latent space
-  int<lower=0> n; // number of trials
+  int<lower=0> n;     // number of trials
 
   int<lower=2> N_row; // number of rows
   int<lower=2> N_col; // number of columns
@@ -97,5 +97,5 @@ model {
     rep_matrix(col_factor_adj, N_row) +
     2.0 * row_embedding * col_embedding);
 
-  flat_edges ~ binomial_logit(means);
+  flat_edges ~ binomial_logit(n, means);
 }
