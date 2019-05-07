@@ -35,6 +35,8 @@
 #'
 LSNM <- function(edges,
                  D = 2,
+                 link_function = "poisson",
+                 n = NULL,
                  method = c("vi", "mcmc"),
                  group1.id = NULL,
                  group2.id = NULL,
@@ -58,9 +60,16 @@ LSNM <- function(edges,
     stop("'group2.id' should be provided")
   if (class(edges)%in%c("data.frame", "igraph")&is.null(count.id))
     stop("'count.id' should be provided")
+  if (!link_function %in% c("poisson", "binomial", "bernoulli"))
+    stop("Invalid link function")
+  if (link_function=="binomial"&is.null(n)) {
+    stop("'n' should be provided")
+  }
   if (!method %in% c("vi","mcmc"))
     stop("'method' should be either 'vi' or 'mcmc'")
 
+  if (link_function=="bernoulli") n <- 1
+  
   # Input data
   if (class(edges)=="matrix") {
     edge_mat <- edges
@@ -79,21 +88,40 @@ LSNM <- function(edges,
     edges_mat <- as.matrix(edges_mat)
   } 
   
-  if (method == "vi") {
-    # Parameters necessary to run stan function
-    stanlist <- list(edges = edge_mat, D = D, N_row = nrow(edge_mat), N_col = ncol(edge_mat),
-                     N_fixed_row=N_fixed_row, N_fixed_col=N_fixed_col, fixed_row_index=fixed_row_index,
-                     fixed_row_embedding=fixed_row_embedding, fixed_col_index=fixed_col_index,
-                     fixed_col_embedding=fixed_col_embedding)
-    sample_post <- rstan::vb(stanmodels$LSNM, data = stanlist, ...)
+  if (link_function == "poisson") {
+    if (method == "vi") {
+      # Parameters necessary to run stan function
+      stanlist <- list(edges = edge_mat, D = D, N_row = nrow(edge_mat), N_col = ncol(edge_mat),
+                       N_fixed_row=N_fixed_row, N_fixed_col=N_fixed_col, fixed_row_index=fixed_row_index,
+                       fixed_row_embedding=fixed_row_embedding, fixed_col_index=fixed_col_index,
+                       fixed_col_embedding=fixed_col_embedding)
+      sample_post <- rstan::vb(stanmodels$LSNM, data = stanlist, ...)
+    } else {
+      # Parameters necessary to run stan function
+      stanlist <- list(edges = edge_mat, D = D, N_row = nrow(edge_mat), N_col = ncol(edge_mat),
+                       N_fixed_row=N_fixed_row, N_fixed_col=N_fixed_col, fixed_row_index=fixed_row_index,
+                       fixed_row_embedding=fixed_row_embedding, fixed_col_index=fixed_col_index,
+                       fixed_col_embedding=fixed_col_embedding)
+      sample_post <- rstan::sampling(stanmodels$LSNM, data = stanlist, ...)
+    }
   } else {
-    # Parameters necessary to run stan function
-    stanlist <- list(edges = edge_mat, D = D, N_row = nrow(edge_mat), N_col = ncol(edge_mat),
-                     N_fixed_row=N_fixed_row, N_fixed_col=N_fixed_col, fixed_row_index=fixed_row_index,
-                     fixed_row_embedding=fixed_row_embedding, fixed_col_index=fixed_col_index,
-                     fixed_col_embedding=fixed_col_embedding)
-    sample_post <- rstan::sampling(stanmodels$LSNM, data = stanlist, ...)
+    if (method == "vi") {
+      # Parameters necessary to run stan function
+      stanlist <- list(edges = edge_mat, D = D, n = n, N_row = nrow(edge_mat), N_col = ncol(edge_mat),
+                       N_fixed_row=N_fixed_row, N_fixed_col=N_fixed_col, fixed_row_index=fixed_row_index,
+                       fixed_row_embedding=fixed_row_embedding, fixed_col_index=fixed_col_index,
+                       fixed_col_embedding=fixed_col_embedding)
+      sample_post <- rstan::vb(LSNMbinom, data = stanlist, ...)
+    } else {
+      # Parameters necessary to run stan function
+      stanlist <- list(edges = edge_mat, D = D, n = n, N_row = nrow(edge_mat), N_col = ncol(edge_mat),
+                       N_fixed_row=N_fixed_row, N_fixed_col=N_fixed_col, fixed_row_index=fixed_row_index,
+                       fixed_row_embedding=fixed_row_embedding, fixed_col_index=fixed_col_index,
+                       fixed_col_embedding=fixed_col_embedding)
+      sample_post <- rstan::sampling(LSNMbinom, data = stanlist, ...)
+    }
   }
+  
 
   out <- list(stan_fitted_model = sample_post)
 
