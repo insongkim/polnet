@@ -20,6 +20,14 @@ edges_to_igraph <- function(edges,
                             count.id = NULL,
                             group1.cluster = NULL,
                             group2.cluster = NULL) {
+  ## Warning for missing parameter
+  if (class(edges)=="data.frame"&is.null(group1.id))
+    stop("'group1.id' should be provided")
+  if (class(edges)=="data.frame"&is.null(group2.id))
+    stop("'group2.id' should be provided")
+  if (class(edges)%in%c("data.frame", "igraph")&is.null(count.id))
+    stop("'count.id' should be provided")
+  
   if (class(edges)=="data.frame") {
     edges <- edges[,c(group1.id, group2.id, count.id)]
     edges <- tidyr::spread(edges, group2.id, count.id)
