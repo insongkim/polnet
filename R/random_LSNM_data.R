@@ -11,6 +11,8 @@
 #'@param v The mean used to generate the alpha_popularity vector. An optional argument, required if missing alpha_popularity
 #'@param sigma_sq_L The variance used to generate the alpha_popularity vector. An optional argument, required if missing alpha_popularity
 #'@param sigma_sq_P The variance used to generate the Beta_popularity vector. An optional argument, required if missing Beta_popularity
+#'@param link_function The model for interaction. The default is poisson, and can be either binomial or Bernoulli.
+#'@param n Number of trials. An optional argument, required if the link function is binomial
 #'@return A list of the latent group1 space, the latent group2 space, and then the randomly generated poisson count matrix A.
 
 #'@import MASS
@@ -31,7 +33,7 @@ random_LSNM_data <- function(D,
                              v = NULL,
                              sigma_sq_L = NULL,
                              sigma_sq_P = NULL,
-                             link_function = c("poisson", "binomial", "bernoulli"),
+                             link_function = "poisson",
                              n = NULL){
   if (!link_function %in% c("poisson", "binomial", "bernoulli"))
     stop("Invalid link function")
