@@ -30,24 +30,34 @@ random_LSNM_data <- function(D,
                              Beta_popularity = NULL,
                              v = NULL,
                              sigma_sq_L = NULL,
-                             sigma_sq_P = NULL){
+                             sigma_sq_P = NULL,
+                             link_function = c("poisson", "binomial", "bernoulli"),
+                             n = NULL){
+  if (!link_function %in% c("poisson", "binomial", "bernoulli"))
+    stop("Invalid link function")
+  if (link_function=="binomial"&is.null(n)) {
+    stop("'n' should be provided")
+  }
+  
+  if (link_function=="bernoulli") n <- 1
+  
   #Generate the alpha, Beta vectors if not existing already
   if(is.null(alpha_popularity)){
     if(is.null(v) | is.null(sigma_sq_L)){
       stop("Invalid Alpha Parameters")
     }else{
-      alpha_popularity = rnorm(group1, v, sigma_sq_L)
+      alpha_popularity <- rnorm(group1, v, sigma_sq_L)
     }
   }
   if(is.null(Beta_popularity)){
     if(is.null(sigma_sq_P)){
       stop("Invalid Beta Parameters")
     }else{
-      Beta_popularity = rnorm(group2, 0, sigma_sq_P)
+      Beta_popularity <- rnorm(group2, 0, sigma_sq_P)
     }
   }
   #putting together matrix of alpha + Beta
-  a_B = outer(alpha_popularity, Beta_popularity, '+')
+  a_B <- outer(alpha_popularity, Beta_popularity, '+')
   if(is.null(group1_space)){
     if(is.null(tau)){
       stop('Invalid Theta Parameters')
@@ -55,20 +65,24 @@ random_LSNM_data <- function(D,
       if(!all(tau[lower.tri(tau)] == 0, tau[upper.tri(tau)] == 0)){
         stop('Tau covariance matrixmust be diagonal')
       }
-      group1_space = mvrnorm(n = group1, mu = rep(0, D), Sigma = tau)
+      group1_space <- mvrnorm(n = group1, mu = rep(0, D), Sigma = tau)
     }
   }
   if(is.null(group2_space)){
     if(is.null(mu) | is.null(Sigma)){
       stop('Invalid Psi Parameters')
     }else{
-      group2_space = mvrnorm(n = group2, mu = mu, Sigma = Sigma)
+      group2_space <- mvrnorm(n = group2, mu = mu, Sigma = Sigma)
     }
   }
-  if (D>=2) distances = outer(split(group1_space, row(group1_space)), split(group2_space, row(group2_space)), Vectorize(l2_norm.sq))
-	else distances = outer(group1_space, group2_space, Vectorize(l2_norm.sq))
-  diff_vec = a_B - distances
-  A_mat = matrix(sapply(as.vector(diff_vec), function(x) rpois(1, exp(x))), nrow = nrow(distances))
+  if (D>=2) distances <- outer(split(group1_space, row(group1_space)), split(group2_space, row(group2_space)), Vectorize(l2_norm.sq))
+  else distances <- outer(group1_space, group2_space, Vectorize(l2_norm.sq))
+  diff_vec <- a_B - distances
+  if (link_function=="poisson") {
+    A_mat <- matrix(sapply(as.vector(diff_vec), function(x) rpois(1, exp(x))), nrow = nrow(distances))
+  } else {
+    A_mat <- matrix(sapply(as.vector(diff_vec), function(x) rbinom(1, n, exp(x)/(1+exp(x)))), nrow = nrow(distances))
+  }
   return(list(Theta = group1_space, Psi = group2_space, A = A_mat))
 }
 
@@ -107,8 +121,10 @@ random_LSNM_data_cluster <- function(n.cluster=4,
                                      tau = 1,
                                      v = 0,
                                      sigma_sq_L = 2,
-                                     sigma_sq_P = 3){
-
+                                     sigma_sq_P = 3,
+                                     link_function = c("poisson", "binomial", "bernoulli"),
+                                     n = NULL){
+  
   # Generate Positive Definite Matrices
   Posdef <- function (n, ev = runif(n, 0, 1)) {
     Z <- matrix(ncol=n, rnorm(n^2))
@@ -121,22 +137,22 @@ random_LSNM_data_cluster <- function(n.cluster=4,
     Z <- t(O) %*% diag(ev) %*% O
     return(Z)
   }
-
+  
   if (is.null(Sigma)){
     if (D>=2){
       Sigma <- Posdef(n=D)
     }
     else Sigma <- runif(1, 1, 2)
   }
-
+  
   # Initialize Actor Coordinates
   group1.cor <- matrix(0, nrow=0, ncol=D+1)
   group2.cor <- matrix(0, nrow=0, ncol=D+1)
-
+  
   # Generate number of units in each clusters randomly
   group1.division <- rmultinom(n=1, size=group1, prob=rep(1/n.cluster,n.cluster))
   group2.division <- rmultinom(n=1, size=group2, prob=rep(1/n.cluster,n.cluster))
-
+  
   # Simulated Coordinates Generation
   if (n.cluster>=2){
     for (i in 1:n.cluster){
@@ -145,49 +161,49 @@ random_LSNM_data_cluster <- function(n.cluster=4,
         group1.sigma <- diag(D)*tau
       } else group1.sigma <- tau
       temp.new.group1.cor <- mvrnorm(n=group1.division[i], mu=group1.center[i,],
-                                      Sigma=group1.sigma)
-
+                                     Sigma=group1.sigma)
+      
       temp.new.group1.cor <- cbind(temp.new.group1.cor, i)
       group1.cor <- rbind(group1.cor, temp.new.group1.cor)
-
+      
       # Generate Coordinates for Actor 2
       group2.sigma <- Sigma
       temp.new.group2.cor <- mvrnorm(n=group2.division[i], mu=group2.center[i,],
-                                          Sigma=group2.sigma)
+                                     Sigma=group2.sigma)
       temp.new.group2.cor <- cbind(temp.new.group2.cor, i)
       group2.cor <- rbind(group2.cor, temp.new.group2.cor)
     }
   } else {
-
+    
     # Generate Coordinates for Actor 1
     if (D>=2){
       group1.sigma <- diag(D)*tau
     } else group1.sigma <- tau
     temp.new.group1.cor <- mvrnorm(n=group1.division, mu=group1.center,
-                                    Sigma=group1.sigma)
-
+                                   Sigma=group1.sigma)
+    
     temp.new.group1.cor <- cbind(temp.new.group1.cor, 1)
     group1.cor <- rbind(group1.cor, temp.new.group1.cor)
-
+    
     # Generate Coordinates for Actor 2
     group2.sigma <- Sigma
     temp.new.group2.cor <- mvrnorm(n=group2.division, mu=group2.center,
-                                        Sigma=group2.sigma)
+                                   Sigma=group2.sigma)
     temp.new.group2.cor <- cbind(temp.new.group2.cor, 1)
     group2.cor <- rbind(group2.cor, temp.new.group2.cor)
-
+    
   }
-
+  
   # Randomly Generate Actors Popularity
   group1.popularity <- rnorm(group1, v, sqrt(sigma_sq_L))
   group2.popularity <- rnorm(group2, 0, sqrt(sigma_sq_P))
-
-
+  
+  
   # Call existing function
   LSNM_data <- random_LSNM_data(D=D, group1=group1, group2 = group2, group1_space = group1.cor[,-(D+1)],
                                 group2_space = group2.cor[,-(D+1)], alpha_popularity = group1.popularity,
-                                Beta_popularity = group2.popularity)
-
+                                Beta_popularity = group2.popularity, link_function = link_function, n = n)
+  
   # return
   ret.list <- list(LSNM_data=LSNM_data, group1.popularity=group1.popularity, group2.popularity=group2.popularity, group1.cor=group1.cor,
                    group2.cor=group2.cor, D=D, group1.center=group1.center,
