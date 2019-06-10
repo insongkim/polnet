@@ -1,5 +1,5 @@
 #' @name LSNM
-#' @param edges Matrix or data.frame or igraph of connection strengths as counts
+#' @param edges Matrix or data.frame or igraph of connection strengths as counts (NA is considered as no edges)
 #' @param D The dimensionality of the latent space, 2 dimensions is recommended
 #' @param method One of \code{vi} (variational inference) or
 #' \code{mcmc} specifying the method of inference. The default is
@@ -73,6 +73,7 @@ LSNM <- function(edges,
   # Input data
   if (class(edges)=="matrix") {
     edge_mat <- edges
+    edge_mat[is.na(edge_mat)] <- 0
   } else {
     
     if (class(edges)=="igraph") {
@@ -86,6 +87,7 @@ LSNM <- function(edges,
     rownames(edge_mat) <- edge_mat[,group1.id]
     edge_mat <- edge_mat[,-1]
     edge_mat <- as.matrix(edge_mat)
+    edge_mat[is.na(edge_mat)] <- 0
   } 
   
   if (link_function == "poisson") {
