@@ -82,10 +82,10 @@ LSNM <- function(edges,
     }
     
     edges <- edges[,c(group1.id, group2.id, count.id)]
-    edges_mat <- tidyr::spread(edges, group2.id, count.id)
-    rownames(edges_mat) <- edges_mat[,group1.id]
-    edges_mat <- edges_mat[,-1]
-    edges_mat <- as.matrix(edges_mat)
+    edge_mat <- tidyr::spread(edges, group2.id, count.id)
+    rownames(edge_mat) <- edge_mat[,group1.id]
+    edge_mat <- edge_mat[,-1]
+    edge_mat <- as.matrix(edge_mat)
   } 
   
   if (link_function == "poisson") {
