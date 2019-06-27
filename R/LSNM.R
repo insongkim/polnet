@@ -130,6 +130,252 @@ LSNM <- function(edges,
   class(out) <- 'LSNM'
   return(out)
 }
+#' Choose the actors whose coordinates will be fixed
+#'
+#' \code{choose.fixed()} takes an object returned by
+#' \code{LSNM}, and returns a list containing the parameters
+#' of actors whose coordinates are fixed.
+#'
+#' @param LSNM_Object A trained object of class LSNM
+#' @param n.wild The number of actors to be fixed in each octants
+#' @param method The method to choose the wildest actors
+#' @return a list containing the parameters of actors whose coordinates are fixed.
+#'
+
+#' @useDynLib polnet, .registration = TRUE
+#' @export
+#' 
+#' 
+choose.fix <- function(LSNM_Object, 
+                       n.wild=1, 
+                       choose.method="axis"){
+    
+  df_fit <- as.data.frame(LSNM_Object$stan_fitted_model)
+  df_fit.mean <- colMeans(df_fit)
+  
+  D <- max(as.numeric(gsub("^cov_embedding_diag\\[(\\d+)\\]$", "\\1", colnames(df_fit)[grep("^cov_embedding_diag\\[(\\d+)\\]$", colnames(df_fit))])))
+  row.actors <- as.numeric(gsub("^row_embedding\\[(\\d+),1\\]$", "\\1", colnames(df_fit)[grep("^row_embedding\\[\\d+,1\\]$", colnames(df_fit))]))
+  col.actors <- as.numeric(gsub("^col_embedding\\[1,(\\d+)\\]$", "\\1", colnames(df_fit)[grep("^col_embedding\\[1,\\d+\\]$", colnames(df_fit))]))
+  
+  
+  if (D==2) {
+    row.embeddings <- df_fit.mean[grep("^row_embedding\\[\\d+,\\d+\\]$", names(df_fit.mean))]  
+    row.embeddings.df <- cbind(df_fit.mean[paste0("row_embedding[", row.actors, ",1]")],
+                               df_fit.mean[paste0("row_embedding[", row.actors, ",2]")])
+    rownames(row.embeddings.df) <- 1:nrow(row.embeddings.df)
+    row.octants <- apply(row.embeddings.df, 1, find.octants)
+    
+    col.embeddings <- df_fit.mean[grep("^col_embedding\\[\\d+,\\d+\\]$", names(df_fit.mean))]  
+    col.embeddings.df <- cbind(df_fit.mean[paste0("col_embedding[1,", col.actors, "]")],
+                               df_fit.mean[paste0("col_embedding[2,", col.actors, "]")])
+    rownames(col.embeddings.df) <- 1:nrow(col.embeddings.df)
+    col.octants <- apply(col.embeddings.df, 1, find.octants)
+    
+    if (choose.method=="octant"){
+      
+      ### Find the Wildest Row Actors, prefarbly in Different Octants
+      
+      ix1 <- order(apply(row.embeddings.df, 1, min_dist_to_octant_line),decreasing=T)[1]
+      octant1 <- row.octants[ix1]
+      
+      octant1.pool <- octant1
+      octant1.found <- FALSE
+      
+      while (!octant1.found){
+        ix1.pool <- as.numeric(names(row.octants[row.octants %in% octant1.pool]))
+        ix1 <- as.numeric(names(row.embeddings.df[ix1.pool,1])
+                          [order(apply(row.embeddings.df[ix1.pool,], 1, min_dist_to_octant_line), decreasing = TRUE)][1:n.wild])
+        ix1 <- ix1[!is.na(ix1)]
+        if (length(ix1)>=n.wild){
+          octant1 <- row.octants[ix1]
+          octant1.found <- TRUE
+        } else octant1.pool <- c(octant1.pool, (octant1.pool-1) %% 8 , (octant1.pool+1) %% 8)
+      }
+      
+      octant2.pool <- unique(octant1 + 4)
+      octant2.found <- FALSE
+      
+      while (!octant2.found){
+        ix2.pool <- as.numeric(names(row.octants[row.octants %in% octant2.pool]))
+        ix2 <- as.numeric(names(row.embeddings.df[ix2.pool,1])
+                          [order(apply(row.embeddings.df[ix2.pool,], 1, min_dist_to_octant_line), decreasing = TRUE)][1:n.wild])
+        ix2 <- ix2[!is.na(ix2)]
+        if (length(ix2)>=n.wild){
+          octant2 <- row.octants[ix2]
+          octant2.found <- TRUE
+        } else octant2.pool <- c(octant2.pool, (octant2.pool-1) %% 8 , (octant2.pool+1) %% 8)
+      }
+      
+      octant3.pool <- unique((octant1+1) %% 8 + 1)
+      octant3.found <- FALSE
+      
+      while (!octant3.found){
+        ix3.pool <- as.numeric(names(row.octants[row.octants %in% octant3.pool]))
+        ix3 <- as.numeric(names(row.embeddings.df[ix3.pool,1])
+                          [order(apply(row.embeddings.df[ix3.pool,], 1, min_dist_to_octant_line), decreasing = TRUE)][1:n.wild])
+        ix3 <- ix3[!is.na(ix3)]
+        if (length(ix3)>=n.wild){
+          octant3 <- row.octants[ix3]
+          octant3.found <- TRUE
+        } else octant3.pool <- c(octant3.pool, (octant3.pool-1) %% 8 , (octant3.pool-1) %% 8)
+      }
+      
+      
+      octant4.pool <- unique((octant2+1) %% 8 + 1)
+      octant4.found <- FALSE
+      
+      while (!octant4.found){
+        ix4.pool <- as.numeric(names(row.octants[row.octants %in% octant4.pool]))
+        ix4 <- as.numeric(names(row.embeddings.df[ix4.pool,1])
+                          [order(apply(row.embeddings.df[ix4.pool,], 1, min_dist_to_octant_line), decreasing = TRUE)][1:n.wild])
+        ix4 <- ix4[!is.na(ix4)]
+        if (length(ix4)>=n.wild){
+          octant4 <- row.octants[ix4]
+          octant4.found <- TRUE
+        } else octant4.pool <- c(octant4.pool, (octant4.pool-1) %% 8 , (octant4.pool-1) %% 8)
+      }
+      
+      fixed_row_index <- unique(c(ix1, ix2, ix3, ix4))
+      N_fixed_row <- length(fixed_row_index)
+      
+      ### Find the Four Wildest Col Actors, prefarbly in Different Octants
+      
+      ix1 <- order(apply(col.embeddings.matrix, 1, min_dist_to_octant_line),decreasing=T)[1]
+      octant1 <- col.octants[ix1]
+      
+      octant1.pool <- octant1
+      octant1.found <- FALSE
+      
+      while (!octant1.found){
+        ix1.pool <- as.numeric(names(col.octants[col.octants %in% octant1.pool]))
+        ix1 <- as.numeric(names(col.embeddings.matrix[ix1.pool,1])
+                          [order(apply(col.embeddings.matrix[ix1.pool,], 1, min_dist_to_octant_line), decreasing = TRUE)][1:n.wild])
+        ix1 <- ix1[!is.na(ix1)]
+        if (length(ix1)>=n.wild){
+          octant1 <- col.octants[ix1]
+          octant1.found <- TRUE
+        } else octant1.pool <- c(octant1.pool, (octant1.pool-1) %% 8 , (octant1.pool+1) %% 8)
+      }
+      
+      octant2.pool <- unique(octant1 + 4) 
+      octant2.found <- FALSE
+      
+      while (!octant2.found){
+        ix2.pool <- as.numeric(names(col.octants[col.octants %in% octant2.pool]))
+        ix2 <- as.numeric(names(col.embeddings.matrix[ix2.pool,1])
+                          [order(apply(col.embeddings.matrix[ix2.pool,], 1, min_dist_to_octant_line), decreasing = TRUE)][1:n.wild])
+        ix2 <- ix2[!is.na(ix2)]
+        if (length(ix2)>=n.wild){
+          octant2 <- col.octants[ix2]
+          octant2.found <- TRUE
+        } else octant2.pool <- c(octant2.pool, (octant2.pool-1) %% 8 , (octant2.pool+1) %% 8)
+      }
+      
+      octant3.pool <- unique((octant1+1) %% 8 + 1)
+      octant3.found <- FALSE
+      
+      while (!octant3.found){
+        ix3.pool <- as.numeric(names(col.octants[col.octants %in% octant3.pool]))
+        ix3 <- as.numeric(names(col.embeddings.matrix[ix3.pool,1])
+                          [order(apply(col.embeddings.matrix[ix3.pool,], 1, min_dist_to_octant_line), decreasing = TRUE)][1:n.wild])
+        ix3 <- ix3[!is.na(ix3)]
+        if (length(ix3)>=n.wild){
+          octant3 <- col.octants[ix3]
+          octant3.found <- TRUE
+        } else octant3.pool <- c(octant3.pool, (octant3.pool-1) %% 8 , (octant3.pool-1) %% 8)
+      }
+      
+      
+      octant4.pool <- unique((octant2+1) %% 8 + 1)
+      octant4.found <- FALSE
+      
+      while (!octant4.found){
+        ix4.pool <- as.numeric(names(col.octants[col.octants %in% octant4.pool]))
+        ix4 <- as.numeric(names(col.embeddings.matrix[ix4.pool,1])
+                          [order(apply(col.embeddings.matrix[ix4.pool,], 1, min_dist_to_octant_line), decreasing = TRUE)][1:n.wild])
+        ix4 <- ix4[!is.na(ix4)]
+        if (length(ix4)>=n.wild){
+          octant4 <- col.octants[ix4]
+          octant4.found <- TRUE
+        } else octant4.pool <- c(octant4.pool, (octant4.pool-1) %% 8 , (octant4.pool-1) %% 8)
+      }
+      
+      fixed_col_index <- unique(c(ix1, ix2, ix3, ix4))
+      N_fixed_col <- length(fixed_col_index)
+      
+      }
+    
+    else if(choose.method=="axis"){
+      row.max <- n.wild
+      col.max <- n.wild
+      
+      max.row.x.pool <- df_fit.mean[grep("^row_embedding\\[\\d+,1\\]$", names(df_fit.mean))]
+      max.row.x.index <- as.numeric(gsub("^row_embedding\\[(\\d+),1\\]","\\1",names(max.row.x.pool[order(max.row.x.pool,decreasing=T)[1:row.max]])))
+      min.row.x.index <- as.numeric(gsub("^row_embedding\\[(\\d+),1\\]","\\1",names(max.row.x.pool[order(max.row.x.pool,decreasing=F)[1:row.max]])))
+      
+      max.row.y.pool <- df_fit.mean[grep("^row_embedding\\[\\d+,2\\]$", names(df_fit.mean))]
+      max.row.y.index <- as.numeric(gsub("^row_embedding\\[(\\d+),2\\]","\\1",names(max.row.y.pool[order(max.row.y.pool,decreasing=T)[1:row.max]])))
+      min.row.y.index <- as.numeric(gsub("^row_embedding\\[(\\d+),2\\]","\\1",names(max.row.y.pool[order(max.row.y.pool,decreasing=F)[1:row.max]])))
+      
+      fixed_row_index <- sort(unique(c(max.row.x.index, min.row.x.index,
+                                       max.row.y.index, min.row.y.index)))
+      N_fixed_row <- length(fixed_row_index)
+      
+      max.col.x.pool <- df_fit.mean[grep("^col_embedding\\[1,\\d+\\]$", names(df_fit.mean))]
+      max.col.x.index <- as.numeric(gsub("^col_embedding\\[1,(\\d+)\\]","\\1",names(max.col.x.pool[order(max.col.x.pool,decreasing=T)[1:col.max]])))
+      min.col.x.index <- as.numeric(gsub("^col_embedding\\[1,(\\d+)\\]","\\1",names(max.col.x.pool[order(max.col.x.pool,decreasing=F)[1:col.max]])))
+      
+      max.col.y.pool <- df_fit.mean[grep("^col_embedding\\[2,\\d+\\]$", names(df_fit.mean))]
+      max.col.y.index <- as.numeric(gsub("^col_embedding\\[2,(\\d+)\\]","\\1",names(max.col.y.pool[order(max.col.y.pool,decreasing=T)[1:col.max]])))
+      min.col.y.index <- as.numeric(gsub("^col_embedding\\[2,(\\d+)\\]","\\1",names(max.col.y.pool[order(max.col.y.pool,decreasing=F)[1:col.max]])))
+      
+      fixed_col_index <- sort(unique(c(max.col.x.index, min.col.x.index,
+                                       max.col.y.index, min.col.y.index)))
+      N_fixed_col <- length(fixed_col_index)
+      
+    }
+    
+    fixed_row_embedding <- row.embeddings.df[fixed_row_index,]
+    
+    fixed_col_embedding <- col.embeddings.df[fixed_col_index,]
+    fixed_col_embedding <- t(fixed_col_embedding)
+  }
+  
+  return(list(N_fixed_row=N_fixed_row, fixed_row_index=fixed_row_index, fixed_row_embedding=fixed_row_embedding,
+         N_fixed_col=N_fixed_col, fixed_col_index=fixed_col_index, fixed_col_embedding=fixed_col_embedding))
+}
+
+find.octants <- function(v){
+  if (v[1] > 0 & v[2] > 0){
+    if (abs(v[1]) > abs(v[2])) return (1)
+    else return(2)
+  }
+  
+  if (v[1] < 0 & v[2] > 0){
+    if (abs(v[1]) > abs(v[2])) return (4)
+    else return(3)
+  }
+  
+  if (v[1] < 0 & v[2] < 0){
+    if (abs(v[1]) > abs(v[2])) return (5)
+    else return(6)
+  } 
+  
+  if (v[1] > 0 & v[2] < 0){
+    if (abs(v[1]) > abs(v[2])) return (8)
+    else return(7)
+  }
+}
+
+min_dist_to_octant_line <- function(v){
+  dist.y <- abs(v[1])
+  dist.x <- abs(v[2])
+  dist.x.y <- abs(v[1]+v[2])/sqrt(2)
+  dist.x.n.y <- abs(v[1]-v[2])/sqrt(2)
+  return (min(dist.y, dist.x, dist.x.y, dist.x.n.y))
+}
+
+
 
 #' Get summaries of a LSNM object
 #'
