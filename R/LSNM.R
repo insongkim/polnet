@@ -143,7 +143,7 @@ LSNM <- function(edges,
 #'
 
 #' @useDynLib polnet, .registration = TRUE
-#' @export
+#' @export choose.fix
 #' 
 #' 
 choose.fix <- function(LSNM_Object, 
