@@ -77,76 +77,19 @@ plot.compare.LSNM(res.vb, sim.data$LSNM_data$Theta,
 ```
 ![](https://github.com/insongkim/repo-data/blob/master/polnet/lsnm_vb_true.png)
 
-We then choose the wildest row and column actors from the posterior estimates from the LSNM model (vi version). The wildest row and column actors are those with the largest/smallest x-coordinates and largest/smallest y-coordinates. By doing so, we can fix 4 row actors and 4 column actors. There is no panacea algorithm that works for all datasets. We will elaborate another possible algorithm to choose row/column actors to fix in a later example.
+We then choose the wildest row and column actors from the posterior estimates from the LSNM model (vi version). There are different ways to do this choice. We have embedded two algorithms in our choose.fix function. Here we use the simpliest one by fixing those row actors and column actors with the largest/smallest x-coordinates and y-coordinates. 
 
 ```r
-# Find the Fixed Actors by Selecting the Wildest Actor, Regardless of Octants
-res.array <- as.array(res.vb$stan_fitted_model)[,1,]
-res.array.mean <- colMeans(res.array)
-
-row.max <- 1
-row.min <- 1
-col.max <- 1
-col.min <- 1
-
-row.embeddings <- res.array.mean[grep("^row_embedding\\[\\d+,\\d+\\]$", names(res.array.mean))]
-max.row.x.pool <- row.embeddings[grep("^row_embedding\\[\\d+,1\\]$", names(row.embeddings))]
-max.row.x.index <- as.numeric(gsub("^row_embedding\\[(\\d+),1\\]","\\1",names(max.row.x.pool[order(max.row.x.pool,decreasing=T)[1:row.max]])))
-min.row.x.index <- as.numeric(gsub("^row_embedding\\[(\\d+),1\\]","\\1",names(max.row.x.pool[order(max.row.x.pool,decreasing=F)[1:row.max]])))
-
-max.row.y.pool <- row.embeddings[grep("^row_embedding\\[\\d+,2\\]$", names(row.embeddings))]
-max.row.y.index <- as.numeric(gsub("^row_embedding\\[(\\d+),2\\]","\\1",names(max.row.y.pool[order(max.row.y.pool,decreasing=T)[1:row.max]])))
-min.row.y.index <- as.numeric(gsub("^row_embedding\\[(\\d+),2\\]","\\1",names(max.row.y.pool[order(max.row.y.pool,decreasing=F)[1:row.max]])))
-
-fixed_row_index <- sort(unique(c(max.row.x.index, min.row.x.index,
-                                 max.row.y.index, min.row.y.index)))
-N_fixed_row <- length(fixed_row_index)
-
-col.embeddings <- res.array.mean[grep("^col_embedding\\[\\d+,\\d+\\]$", names(res.array.mean))]
-max.col.x.pool <- col.embeddings[grep("^col_embedding\\[1,\\d+\\]$", names(col.embeddings))]
-max.col.x.index <- as.numeric(gsub("^col_embedding\\[1,(\\d+)\\]","\\1",names(max.col.x.pool[order(max.col.x.pool,decreasing=T)[1:col.max]])))
-min.col.x.index <- as.numeric(gsub("^col_embedding\\[1,(\\d+)\\]","\\1",names(max.col.x.pool[order(max.col.x.pool,decreasing=F)[1:col.max]])))
-
-max.col.y.pool <- col.embeddings[grep("^col_embedding\\[2,\\d+\\]$", names(col.embeddings))]
-max.col.y.index <- as.numeric(gsub("^col_embedding\\[2,(\\d+)\\]","\\1",names(max.col.y.pool[order(max.col.y.pool,decreasing=T)[1:col.max]])))
-min.col.y.index <- as.numeric(gsub("^col_embedding\\[2,(\\d+)\\]","\\1",names(max.col.y.pool[order(max.col.y.pool,decreasing=F)[1:col.max]])))
-
-fixed_col_index <- sort(unique(c(max.col.x.index, min.col.x.index,
-                                 max.col.y.index, min.col.y.index)))
-N_fixed_col <- length(fixed_col_index)
+mcmc.parameters <- choose.fix(res.vb, n.wild=1, choose.method="axis")
 ```
 
 We then run the full MCMC model with the coordinates of these chosen actors fixed. 
 
 ```r
-## Generate Data Matrice for Fixed Parameters
-regex_row_embedding <- paste0("^row_embedding\\[(",paste0(fixed_row_index, collapse="|"),"),\\d+\\]$")
-fixed_row_embedding <- res.array.mean[grep(regex_row_embedding, names(res.array.mean), perl = TRUE)]
-regex_row_embedding_reshape_1 <- paste0("^row_embedding\\[(",paste0(fixed_row_index, collapse="|"),"),1\\]$")
-regex_row_embedding_reshape_2 <- paste0("^row_embedding\\[(",paste0(fixed_row_index, collapse="|"),"),2\\]$")
-
-fixed_row_embedding <- cbind(fixed_row_embedding[grep(regex_row_embedding_reshape_1, names(fixed_row_embedding))],
-                             fixed_row_embedding[grep(regex_row_embedding_reshape_2, names(fixed_row_embedding))])
-
-rownames(fixed_row_embedding) <- gsub(",\\d+\\]$","\\]",rownames(fixed_row_embedding))
-
-regex_col_embedding <- paste0("^col_embedding\\[\\d+,(",paste0(fixed_col_index, collapse="|"),")\\]$")
-fixed_col_embedding <- res.array.mean[grep(regex_col_embedding, names(res.array.mean), perl = TRUE)]
-regex_col_embedding_reshape_1 <- paste0("^col_embedding\\[1,(",paste0(fixed_col_index, collapse="|"),")\\]$")
-regex_col_embedding_reshape_2 <- paste0("^col_embedding\\[2,(",paste0(fixed_col_index, collapse="|"),")\\]$")
-
-fixed_col_embedding <- cbind(fixed_col_embedding[grep(regex_col_embedding_reshape_1, names(fixed_col_embedding))],
-                             fixed_col_embedding[grep(regex_col_embedding_reshape_2, names(fixed_col_embedding))])
-
-rownames(fixed_col_embedding) <- gsub("\\d+,(\\d+)\\]$","\\1]",rownames(fixed_col_embedding))
-fixed_col_embedding <- t(fixed_col_embedding)
-
 res <- LSNM(sim.data$LSNM_data$A,
-            N_fixed_row=N_fixed_row, N_fixed_col=N_fixed_col, 
-            fixed_row_index=fixed_row_index, fixed_row_embedding=fixed_row_embedding,
-            fixed_col_index=fixed_col_index, fixed_col_embedding=fixed_col_embedding,
-            D=2, cores=7, warmup=1000, iter=2000, chains=4, control = list(max_treedepth = 20), 
-            method="mcmc")
+       N_fixed_row=mcmc.parameters$N_fixed_row, N_fixed_col=mcmc.parameters$N_fixed_col, fixed_row_index=mcmc.parameters$fixed_row_index, 
+       fixed_row_embedding=mcmc.parameters$fixed_row_embedding,  fixed_col_index=mcmc.parameters$fixed_col_index, fixed_col_embedding=mcmc.parameters$fixed_col_embedding,
+                        D=2, cores=7, warmup=1000, iter=2000, chains=4, control = list(max_treedepth = 20), method="mcmc")
 ```
 
 The following plot compares the MCMC posterior coordinates of actors with their true coordinates.
