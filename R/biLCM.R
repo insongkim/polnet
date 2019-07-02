@@ -1,18 +1,23 @@
 #'@name biLCM
-#'@param A Matrix of connection strength as counts
-#'@param m Number of clients
-#'@param n Number of politicians
-#'@param k Number of link communities
-#'@return A list specifying the membership weights, client membership distributions, and politician membership distributions
+#'@param edges Matrix or data.frame or igraph of connection strengths as counts (NA is considered as no edges)
+#'@param group1.id A character string indicating the name of group1 identifier
+#'variable in the \code{edges} data.frame. It is required in the case of data.frame.
+#'@param group2.id A character string indicating the name of group2 identifier
+#'variable in the \code{edges} data.frame. It is required in the case of data.frame.
+#'@param count.id A character string indicating the name of count identifier
+#'variable in the \code{edges} data.frame. The variable must be numeric.
+#'@param k Number of link communities.
+#'@param tolerance Tolerance for convergence.
+#'@param max.iter Maximum value of iteration numbers. It is required to avoid infinite loop.
+#'@return A list specifying the log-likelihood for each iteration, membership weights, membership distributions of group1 and group2
 
 #'@export
 
 biLCM <- function(edges, 
                   group1.id = NULL,
                   group2.id = NULL,
-                  count.id = NULL
+                  count.id = NULL,
                   k = NULL,
-                  seed = 12345,
                   tolerance = 1e-6,
                   max.iter = 200){
   
@@ -54,35 +59,53 @@ biLCM <- function(edges,
   n <- ncol(edge_mat)
   
   # Initialize parameters
-  set.seed(seed)
   kappa <- rgamma(k, 2, 0.5)
-  alpha <- matrix(runif(m*k), m, k)
-  alpha[,] <- alpha/rowSums(alpha)
-  beta <- matrix(runif(n*k), n, k)
-  beta[,] <- beta/rowSums(beta)
+  alpha <- t(rdirichlet(k, rep(1, m)))
+  beta <- t(rdirichlet(k, rep(1, n)))
   q <- array(0, c(m, n, k))
   
   iter_count <- 0
   llik_iter <- numeric(max.iter)
   
+  kab <- sweep(alpha, 2, kappa, "*") %*% t(beta)
+  llik_old <- sum(edge_mat * log(kab)) - sum(kab)
+  
   repeat {
     iter_count <- iter_count + 1
-    # E-step
-
     
-    # M-step
-
+    ## E-step
+    numer <- sapply(1:k, function(z) kappa[z]*outer(alpha[,z], beta[,z], "*"), simplify = "array")
+    denom <- apply(numer, c(1,2), sum)
+    q <- sweep(numer, c(1,2), denom, "/")
+    
+    ## M-step
+    # Update alpha
+    numer <- sapply(1:k, function(z) rowSums(sweep(edge_mat, c(1,2), q[,,z], "*")))
+    denom <- colSums(numer)
+    alpha <- sweep(numer, 2, denom, "/")
+    # Update beta
+    numer <- sapply(1:k, function(z) colSums(sweep(edge_mat, c(1,2), q[,,z], "*")))
+    beta <- sweep(numer, 2, denom, "/")
+    # Update kappa
+    numer <- denom
+    kappa <- numer/sapply(1:k, function(z) sum(outer(alpha[,z], beta[,z], "*")))
     
     # Calculate log likelihood
-    llik_new <- 0
+    kab <- sweep(alpha, 2, kappa, "*") %*% t(beta)
+    log_kab <- log(kab)
+    log_kab[which(is.na(log_kab))] <- 0
+    log_kab[which(is.infinite(log_kab))] <- -1.797693e+308
+    llik_new <- sum(edge_mat * log_kab) - sum(kab)
     llik_iter[iter_count] <- llik_new
     
-    ## check convergence
+    # Check convergence
     if (llik_new - llik_old < tolerance || iter_count == max.iter) break
-    ## update log-likelihood
+    # Update log-likelihood
     llik_old <- llik_new
   }
-    
-	answer <- list(kappa = kappa, alpha = alpha, beta = beta)
-	return(answer)
+  
+  out <- list(loglikelihood = llik_iter, kappa = kappa, alpha = alpha, beta = beta)
+  
+  class(out) <- "biLCM"
+  return(out)
 }

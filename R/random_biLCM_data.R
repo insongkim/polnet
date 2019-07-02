@@ -5,9 +5,10 @@
 #'@param a The shape parameter to generate kappa. Expecting a positive real number. An optional argument, required if missing kappa_weight.
 #'@param b The rate parameter to generate kappa. Expecting a positive real number. An optional argument, required if missing kappa_weight.
 #'@param alpha_membership The desired latent mixed-membership of the group1. Expecting a matrix with m rows and k columns. Assumed to be drawn from a dirichlet distribution with concentration parameters alpha_c. An optional argument, but must specify this or alpha_c.
-#'@param alpha_c The concentration vector to generate alpha_membership. Expecting a vector of length k. An optional argument, required if missing alpha_membership.
+#'@param alpha_c The concentration vector to generate alpha_membership. Expecting a vector of length m. An optional argument, required if missing alpha_membership.
 #'@param beta_membership The desired latent mixed-membership of the group2. Expecting a matrix with n rows and k columns. Assumed to be drawn from a dirichlet distribution with concentration parameters beta_c. An optional argument, but must specify this or beta_c.
-#'@param beta_c The concentration vector to generate beta_membership. Expecting a vector of length k. An optional argument, required if missing beta_membership.
+#'@param beta_c The concentration vector to generate beta_membership. Expecting a vector of length n. An optional argument, required if missing beta_membership.
+#'@param non_zero If non_zero = TRUE, repeat the data generating process untill each member has at least one interaction with others.
 #'@return A list of kappa_weight, alpha_membership, beta_membership, and then the randomly generated poisson count matrix A.
 
 #'@export
@@ -21,46 +22,53 @@ random_biLCM_data <- function(m,
                               alpha_membership = NULL,
                               alpha_c = NULL,
                               beta_membership = NULL,
-                              beta_c = NULL) {
+                              beta_c = NULL,
+                              non_zero = FALSE) {
   
-  # Generating kappa
-  if(is.null(kappa_weight)){
-    if(is.null(a) | is.null(b)){
-      stop("Invalid Kappa Parameters")
-    }else{
-      kappa_weight <- rgamma(k, shape = a, rate = b)
+  repeat {
+    # Generating kappa
+    if(is.null(kappa_weight)){
+      if(is.null(a) | is.null(b)){
+        stop("Invalid Kappa Parameters")
+      }else{
+        kappa_weight <- rgamma(k, shape = a, rate = b)
+      }
     }
-  }
-
-  # Generating alpha
-  if(is.null(alpha_membership)){
-    if(is.null(alpha_c)){
-      stop("Invalid Alpha Parameters")
-    }else{
-      alpha_membership  <- rdirichlet(m, alpha_c)
+    
+    # Generating alpha
+    if(is.null(alpha_membership)){
+      if(is.null(alpha_c)){
+        stop("Invalid Alpha Parameters")
+      }else{
+        alpha_membership  <- t(rdirichlet(k, alpha_c))
+      }
     }
-  }
-  
-  # Generating beta
-  if(is.null(beta_membership)){
-    if(is.null(beta_c)){
-      stop("Invalid Alpha Parameters")
-    }else{
-      beta_membership  <- rdirichlet(n, beta_c)
+    
+    # Generating beta
+    if(is.null(beta_membership)){
+      if(is.null(beta_c)){
+        stop("Invalid Alpha Parameters")
+      }else{
+        beta_membership  <- t(rdirichlet(k, beta_c))
+      }
     }
+    
+    mu <- sweep(alpha_membership, 2, kappa_weight, "*") %*% t(beta_membership)
+    A_mat <- matrix(sapply(mu, function(x) rpois(1, x)), m, n)
+    
+    if (((!0 %in% colSums(A_mat)) & (!0 %in% rowSums(A_mat))) | !non_zero) break
   }
   
-  mu <- sweep(alpha_membership, 2, kappa_weight, "*") %*% t(beta_membership)
-  A_mat <- matrix(sapply(mu, function(x) rpois(1, x)), m, n)
   
-  return(list(Kappa = kappa_weight, Alpha = alpha_membership, Beta = beta_membership, A = A_mat))
+  
+  return(list(kappa = kappa_weight, alpha = alpha_membership, beta = beta_membership, A = A_mat))
 }
 
 
 rdirichlet = function(n, alpha) {
   l <- length(alpha)
   sample <- matrix(rgamma(l*n, alpha), ncol = l, byrow = TRUE)
-  sample <- sample/apply(sample, 1, sum) 
+  sample <- sample/rowSums(sample)
   
   return(sample)
 }
