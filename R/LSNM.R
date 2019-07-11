@@ -37,7 +37,7 @@ LSNM <- function(edges,
                  D = 2,
                  link_function = "poisson",
                  n = NULL,
-                 method = c("vi", "mcmc"),
+                 method = c("vi", "mcmc", "vi-mcmc"),
                  group1.id = NULL,
                  group2.id = NULL,
                  count.id = NULL,
@@ -47,6 +47,8 @@ LSNM <- function(edges,
                  fixed_row_embedding=matrix(0, nrow=0, ncol=2),
                  fixed_col_index=vector(),
                  fixed_col_embedding=matrix(0, nrow=2, ncol=0),
+                 fixed.actor.object=NULL,
+                 iter.vb=NULL, iter.mcmc=NULL,
                  ...){
 
   ## Warning for missing parameter
@@ -65,10 +67,33 @@ LSNM <- function(edges,
   if (link_function=="binomial"&is.null(n)) {
     stop("'n' should be provided")
   }
-  if (!method %in% c("vi","mcmc"))
-    stop("'method' should be either 'vi' or 'mcmc'")
+  if (!method %in% c("vi","mcmc","vi-mcmc"))
+    stop("'method' should be either 'vi' or 'mcmc' or 'vi-mcmc")
+  if (!is.null(fixed.actor.object) & class(fixed.actor.object)!="LSNM_fixed_actors")
+    stop("fixed.actor.object must be of class LSNM_fixed_actors.")
+  if (missing(iter) & is.null(iter.vb) & is.null(iter.mcmc)){
+    iter <- 2000
+    warning("Number of iteration=2000 applies by default.")
+  }
+  if (is.null(iter.vb))
+    iter.vb <- iter
+  if (is.null(iter.mc.c))
+    iter.mcmc <- iter
 
   if (link_function=="bernoulli") n <- 1
+  
+  ## Create fixed.actor.list if NULL
+  if (is.null(fixed.actor.object)){
+    fixed.actor.object <- list(N_fixed_row=N_fixed_row,
+                               N_fixed_col=N_fixed_col,
+                               fixed_row_index=fixed_row_index,
+                               fixed_row_embedding=fixed_row_embedding,
+                               fixed_col_index=fixed_col_index,
+                               fixed_col_embedding=fixed_col_embedding)
+    class(fixed.actor.object) <- "LSNM_fixed_actors"
+  }
+  
+
   
   # Input data
   if (class(edges)=="matrix") {
@@ -94,35 +119,72 @@ LSNM <- function(edges,
     if (method == "vi") {
       # Parameters necessary to run stan function
       stanlist <- list(edges = edge_mat, D = D, N_row = nrow(edge_mat), N_col = ncol(edge_mat),
-                       N_fixed_row=N_fixed_row, N_fixed_col=N_fixed_col, fixed_row_index=fixed_row_index,
-                       fixed_row_embedding=fixed_row_embedding, fixed_col_index=fixed_col_index,
-                       fixed_col_embedding=fixed_col_embedding)
-      sample_post <- rstan::vb(stanmodels$LSNM, data = stanlist, ...)
-    } else {
+                       N_fixed_row=fixed.actor.object$N_fixed_row, N_fixed_col=fixed.actor.object$N_fixed_col, fixed_row_index=fixed.actor.object$fixed_row_index,
+                       fixed_row_embedding=fixed.actor.object$fixed_row_embedding, fixed_col_index=fixed.actor.object$fixed_col_index,
+                       fixed_col_embedding=fixed.actor.object$fixed_col_embedding)
+      sample_post <- rstan::vb(stanmodels$LSNM, data = stanlist, iter=iter.vb, ...)
+    } else if (method == "mcmc"){
       # Parameters necessary to run stan function
       stanlist <- list(edges = edge_mat, D = D, N_row = nrow(edge_mat), N_col = ncol(edge_mat),
-                       N_fixed_row=N_fixed_row, N_fixed_col=N_fixed_col, fixed_row_index=fixed_row_index,
-                       fixed_row_embedding=fixed_row_embedding, fixed_col_index=fixed_col_index,
-                       fixed_col_embedding=fixed_col_embedding)
-      sample_post <- rstan::sampling(stanmodels$LSNM, data = stanlist, ...)
+                       N_fixed_row=fixed.actor.object$N_fixed_row, N_fixed_col=fixed.actor.object$N_fixed_col, fixed_row_index=fixed.actor.object$fixed_row_index,
+                       fixed_row_embedding=fixed.actor.object$fixed_row_embedding, fixed_col_index=fixed.actor.object$fixed_col_index,
+                       fixed_col_embedding=fixed.actor.object$fixed_col_embedding)
+      sample_post <- rstan::sampling(stanmodels$LSNM, data = stanlist, iter=iter.mcmc, ...)
+    } else if (method == "vi-mcmc"){
+      # Parameters necessary to run stan function
+      stanlist <- list(edges = edge_mat, D = D, N_row = nrow(edge_mat), N_col = ncol(edge_mat),
+                       N_fixed_row=fixed.actor.object$N_fixed_row, N_fixed_col=fixed.actor.object$N_fixed_col, fixed_row_index=fixed.actor.object$fixed_row_index,
+                       fixed_row_embedding=fixed.actor.object$fixed_row_embedding, fixed_col_index=fixed.actor.object$fixed_col_index,
+                       fixed_col_embedding=fixed.actor.object$fixed_col_embedding)
+      sample_post <- rstan::vb(stanmodels$LSNM, data = stanlist, iter=iter.vb, ...)
+      
+      mcmc.input <- list(stan_fitted_model = sample_post)
+      class(mcmc.input) <- 'LSNM'
+      
+      fixed.actor.object <- choose.fix(mcmc.input, n.wild=1, choose.method="axis")
+      
+      stanlist <- list(edges = edge_mat, D = D, N_row = nrow(edge_mat), N_col = ncol(edge_mat),
+                       N_fixed_row=fixed.actor.object$N_fixed_row, N_fixed_col=fixed.actor.object$N_fixed_col, fixed_row_index=fixed.actor.object$fixed_row_index,
+                       fixed_row_embedding=fixed.actor.object$fixed_row_embedding, fixed_col_index=fixed.actor.object$fixed_col_index,
+                       fixed_col_embedding=fixed.actor.object$fixed_col_embedding)
+      sample_post <- rstan::sampling(stanmodels$LSNM, data = stanlist, iter=iter.mcmc, ...)
     }
   } else {
     if (method == "vi") {
       # Parameters necessary to run stan function
       stanlist <- list(edges = edge_mat, D = D, n = n, N_row = nrow(edge_mat), N_col = ncol(edge_mat),
-                       N_fixed_row=N_fixed_row, N_fixed_col=N_fixed_col, fixed_row_index=fixed_row_index,
-                       fixed_row_embedding=fixed_row_embedding, fixed_col_index=fixed_col_index,
-                       fixed_col_embedding=fixed_col_embedding)
-      sample_post <- rstan::vb(stanmodels$LSNMbinom, data = stanlist, ...)
-    } else {
+                       N_fixed_row=fixed.actor.object$N_fixed_row, N_fixed_col=fixed.actor.object$N_fixed_col, fixed_row_index=fixed.actor.object$fixed_row_index,
+                       fixed_row_embedding=fixed.actor.object$fixed_row_embedding, fixed_col_index=fixed.actor.object$fixed_col_index,
+                       fixed_col_embedding=fixed.actor.object$fixed_col_embedding)
+      sample_post <- rstan::vb(stanmodels$LSNMbinom, data = stanlist, iter=iter.vb, ...)
+    } else if (method == "mcmc") {
       # Parameters necessary to run stan function
       stanlist <- list(edges = edge_mat, D = D, n = n, N_row = nrow(edge_mat), N_col = ncol(edge_mat),
-                       N_fixed_row=N_fixed_row, N_fixed_col=N_fixed_col, fixed_row_index=fixed_row_index,
-                       fixed_row_embedding=fixed_row_embedding, fixed_col_index=fixed_col_index,
-                       fixed_col_embedding=fixed_col_embedding)
-      sample_post <- rstan::sampling(stanmodels$LSNMbinom, data = stanlist, ...)
+                       N_fixed_row=fixed.actor.object$N_fixed_row, N_fixed_col=fixed.actor.object$N_fixed_col, fixed_row_index=fixed.actor.object$fixed_row_index,
+                       fixed_row_embedding=fixed.actor.object$fixed_row_embedding, fixed_col_index=fixed.actor.object$fixed_col_index,
+                       fixed_col_embedding=fixed.actor.object$fixed_col_embedding)
+      sample_post <- rstan::sampling(stanmodels$LSNMbinom, data = stanlist, iter=iter.mcmc, ...)
+    } else if (method == "vi-mcmc") {
+      # Parameters necessary to run stan function
+      stanlist <- list(edges = edge_mat, D = D, n = n, N_row = nrow(edge_mat), N_col = ncol(edge_mat),
+                       N_fixed_row=fixed.actor.object$N_fixed_row, N_fixed_col=fixed.actor.object$N_fixed_col, fixed_row_index=fixed.actor.object$fixed_row_index,
+                       fixed_row_embedding=fixed.actor.object$fixed_row_embedding, fixed_col_index=fixed.actor.object$fixed_col_index,
+                       fixed_col_embedding=fixed.actor.object$fixed_col_embedding)
+      sample_post <- rstan::vb(stanmodels$LSNMbinom, data = stanlist, iter=iter.vb, ...)
+      
+      mcmc.input <- list(stan_fitted_model = sample_post)
+      class(mcmc.input) <- 'LSNM'
+      
+      fixed.actor.object <- choose.fix(mcmc.input, n.wild=2, choose.method="axis")
+      
+      stanlist <- list(edges = edge_mat, D = D, n = n, N_row = nrow(edge_mat), N_col = ncol(edge_mat),
+                       N_fixed_row=fixed.actor.object$N_fixed_row, N_fixed_col=fixed.actor.object$N_fixed_col, fixed_row_index=fixed.actor.object$fixed_row_index,
+                       fixed_row_embedding=fixed.actor.object$fixed_row_embedding, fixed_col_index=fixed.actor.object$fixed_col_index,
+                       fixed_col_embedding=fixed.actor.object$fixed_col_embedding)
+      sample_post <- rstan::sampling(stanmodels$LSNMbinom, data = stanlist, iter=iter.mcmc, ...)
+      
     }
-  }
+  }  
   
 
   out <- list(stan_fitted_model = sample_post)
@@ -341,8 +403,12 @@ choose.fix <- function(LSNM_Object,
     fixed_col_embedding <- t(fixed_col_embedding)
   }
   
-  return(list(N_fixed_row=N_fixed_row, fixed_row_index=fixed_row_index, fixed_row_embedding=fixed_row_embedding,
-         N_fixed_col=N_fixed_col, fixed_col_index=fixed_col_index, fixed_col_embedding=fixed_col_embedding))
+  res <- list(N_fixed_row=N_fixed_row, fixed_row_index=fixed_row_index, fixed_row_embedding=fixed_row_embedding,
+              N_fixed_col=N_fixed_col, fixed_col_index=fixed_col_index, fixed_col_embedding=fixed_col_embedding)
+  
+  class(res) <- "LSNM_fixed_actors"
+  
+  return(res)
 }
 
 find.octants <- function(v){
