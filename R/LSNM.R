@@ -47,7 +47,7 @@ LSNM <- function(edges,
                  fixed_row_embedding=matrix(0, nrow=0, ncol=2),
                  fixed_col_index=vector(),
                  fixed_col_embedding=matrix(0, nrow=2, ncol=0),
-                 fixed.actor.object=NULL,
+                 fixed.actor.object=NULL, iter,
                  iter.vb=NULL, iter.mcmc=NULL,
                  ...){
 
