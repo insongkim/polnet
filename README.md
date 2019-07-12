@@ -86,7 +86,10 @@ fix.actors <- choose.fix(res.vb, choose.method="axis")
 We then run the full MCMC model with the coordinates of these chosen actors fixed. 
 
 ```r
-res.mcmc <- LSNM(sim.data$LSNM_data$A, D=2, method = "mcmc", iter=2000, fixed.actor.object = fix.actors, cores=4, control = list(max_treedepth = 20))
+res.mcmc <- LSNM(sim.data$LSNM_data$A, D=2, 
+          method = "mcmc", iter=2000, 
+          fixed.actor.object = fix.actors, 
+          cores=4, control = list(max_treedepth = 20))
 ```
 
 The following plot compares the MCMC posterior coordinates of actors with their true coordinates.
