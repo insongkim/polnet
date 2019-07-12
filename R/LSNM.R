@@ -256,7 +256,7 @@ choose.fix <- function(LSNM_Object,
       
       ### Find the Four Wildest Col Actors, prefarbly in Different Octants
       
-      ix1 <- order(apply(col.embeddings.matrix, 1, min_dist_to_octant_line),decreasing=T)[1]
+      ix1 <- order(apply(col.embeddings.df, 1, min_dist_to_octant_line),decreasing=T)[1]
       octant1 <- col.octants[ix1]
       
       octant1.pool <- octant1
@@ -264,8 +264,8 @@ choose.fix <- function(LSNM_Object,
       
       while (!octant1.found){
         ix1.pool <- as.numeric(names(col.octants[col.octants %in% octant1.pool]))
-        ix1 <- as.numeric(names(col.embeddings.matrix[ix1.pool,1])
-                          [order(apply(col.embeddings.matrix[ix1.pool,], 1, min_dist_to_octant_line), decreasing = TRUE)][1:n.wild])
+        ix1 <- as.numeric(names(col.embeddings.df[ix1.pool,1])
+                          [order(apply(col.embeddings.df[ix1.pool,], 1, min_dist_to_octant_line), decreasing = TRUE)][1:n.wild])
         ix1 <- ix1[!is.na(ix1)]
         if (length(ix1)>=n.wild){
           octant1 <- col.octants[ix1]
@@ -278,8 +278,8 @@ choose.fix <- function(LSNM_Object,
       
       while (!octant2.found){
         ix2.pool <- as.numeric(names(col.octants[col.octants %in% octant2.pool]))
-        ix2 <- as.numeric(names(col.embeddings.matrix[ix2.pool,1])
-                          [order(apply(col.embeddings.matrix[ix2.pool,], 1, min_dist_to_octant_line), decreasing = TRUE)][1:n.wild])
+        ix2 <- as.numeric(names(col.embeddings.df[ix2.pool,1])
+                          [order(apply(col.embeddings.df[ix2.pool,], 1, min_dist_to_octant_line), decreasing = TRUE)][1:n.wild])
         ix2 <- ix2[!is.na(ix2)]
         if (length(ix2)>=n.wild){
           octant2 <- col.octants[ix2]
@@ -292,8 +292,8 @@ choose.fix <- function(LSNM_Object,
       
       while (!octant3.found){
         ix3.pool <- as.numeric(names(col.octants[col.octants %in% octant3.pool]))
-        ix3 <- as.numeric(names(col.embeddings.matrix[ix3.pool,1])
-                          [order(apply(col.embeddings.matrix[ix3.pool,], 1, min_dist_to_octant_line), decreasing = TRUE)][1:n.wild])
+        ix3 <- as.numeric(names(col.embeddings.df[ix3.pool,1])
+                          [order(apply(col.embeddings.df[ix3.pool,], 1, min_dist_to_octant_line), decreasing = TRUE)][1:n.wild])
         ix3 <- ix3[!is.na(ix3)]
         if (length(ix3)>=n.wild){
           octant3 <- col.octants[ix3]
@@ -307,8 +307,8 @@ choose.fix <- function(LSNM_Object,
       
       while (!octant4.found){
         ix4.pool <- as.numeric(names(col.octants[col.octants %in% octant4.pool]))
-        ix4 <- as.numeric(names(col.embeddings.matrix[ix4.pool,1])
-                          [order(apply(col.embeddings.matrix[ix4.pool,], 1, min_dist_to_octant_line), decreasing = TRUE)][1:n.wild])
+        ix4 <- as.numeric(names(col.embeddings.df[ix4.pool,1])
+                          [order(apply(col.embeddings.df[ix4.pool,], 1, min_dist_to_octant_line), decreasing = TRUE)][1:n.wild])
         ix4 <- ix4[!is.na(ix4)]
         if (length(ix4)>=n.wild){
           octant4 <- col.octants[ix4]
@@ -319,7 +319,8 @@ choose.fix <- function(LSNM_Object,
       fixed_col_index <- unique(c(ix1, ix2, ix3, ix4))
       N_fixed_col <- length(fixed_col_index)
       
-      }
+    }
+    
     
     else if(choose.method=="axis"){
       row.max <- n.wild
@@ -350,12 +351,12 @@ choose.fix <- function(LSNM_Object,
       N_fixed_col <- length(fixed_col_index)
       
     }
-    
-    fixed_row_embedding <- row.embeddings.df[fixed_row_index,]
-    
-    fixed_col_embedding <- col.embeddings.df[fixed_col_index,]
-    fixed_col_embedding <- t(fixed_col_embedding)
   }
+  
+  fixed_row_embedding <- row.embeddings.df[fixed_row_index,]
+  
+  fixed_col_embedding <- col.embeddings.df[fixed_col_index,]
+  fixed_col_embedding <- t(fixed_col_embedding)
   
   res <- list(N_fixed_row=N_fixed_row, fixed_row_index=fixed_row_index, fixed_row_embedding=fixed_row_embedding,
               N_fixed_col=N_fixed_col, fixed_col_index=fixed_col_index, fixed_col_embedding=fixed_col_embedding)
