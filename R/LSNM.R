@@ -77,7 +77,7 @@ LSNM <- function(edges,
   }
   if (is.null(iter.vb))
     iter.vb <- iter
-  if (is.null(iter.mc.c))
+  if (is.null(iter.mcmc))
     iter.mcmc <- iter
 
   if (link_function=="bernoulli") n <- 1
