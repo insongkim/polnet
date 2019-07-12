@@ -124,7 +124,7 @@ random_LSNM_data_cluster <- function(n.cluster=4,
                                      v = 0,
                                      sigma_sq_L = 2,
                                      sigma_sq_P = 3,
-                                     link_function = c("poisson", "binomial", "bernoulli"),
+                                     link_function = "poisson",
                                      n = NULL){
   
   # Generate Positive Definite Matrices
@@ -152,8 +152,11 @@ random_LSNM_data_cluster <- function(n.cluster=4,
   group2.cor <- matrix(0, nrow=0, ncol=D+1)
   
   # Generate number of units in each clusters randomly
-  group1.division <- rmultinom(n=1, size=group1, prob=rep(1/n.cluster,n.cluster))
-  group2.division <- rmultinom(n=1, size=group2, prob=rep(1/n.cluster,n.cluster))
+  repeat {
+    group1.division <- rmultinom(n=1, size=group1, prob=rep(1/n.cluster,n.cluster))
+    group2.division <- rmultinom(n=1, size=group2, prob=rep(1/n.cluster,n.cluster))
+    if (!0 %in% c(group1.division, group2.division)) break
+  }
   
   # Simulated Coordinates Generation
   if (n.cluster>=2){
