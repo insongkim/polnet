@@ -77,19 +77,16 @@ plot.compare.LSNM(res.vb, sim.data$LSNM_data$Theta,
 ```
 ![](https://github.com/insongkim/repo-data/blob/master/polnet/lsnm_vb_true.png)
 
-We then choose the wildest row and column actors from the posterior estimates from the LSNM model (vi version). There are different ways to do this choice. We have embedded two algorithms in our choose.fix function. Here we use the simpliest one by fixing those row actors and column actors with the largest/smallest x-coordinates and y-coordinates. 
+We then choose the wildest row and column actors from the posterior estimates from the LSNM model (vi version). There are different ways to do this choice. We have embedded two algorithms in our choose.fix function. Here we use the o
 
 ```r
-mcmc.parameters <- choose.fix(res.vb, n.wild=1, choose.method="axis")
+fix.actors <- choose.fix(res.vb, choose.method="axis")
 ```
 
 We then run the full MCMC model with the coordinates of these chosen actors fixed. 
 
 ```r
-res <- LSNM(sim.data$LSNM_data$A,
-       N_fixed_row=mcmc.parameters$N_fixed_row, N_fixed_col=mcmc.parameters$N_fixed_col, fixed_row_index=mcmc.parameters$fixed_row_index, 
-       fixed_row_embedding=mcmc.parameters$fixed_row_embedding,  fixed_col_index=mcmc.parameters$fixed_col_index, fixed_col_embedding=mcmc.parameters$fixed_col_embedding,
-                        D=2, cores=7, warmup=1000, iter=2000, chains=4, control = list(max_treedepth = 20), method="mcmc")
+res.mcmc <- LSNM(sim.data$LSNM_data$A, D=2, method = "mcmc", iter=2000, fixed.actor.object = fix.actors, cores=4, control = list(max_treedepth = 20))
 ```
 
 The following plot compares the MCMC posterior coordinates of actors with their true coordinates.
