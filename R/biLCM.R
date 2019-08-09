@@ -16,6 +16,7 @@
 #'set.seed(11)
 #'sim.data <- random_biLCM_data(m = 100, n = 50, k = 4, kappa_weight = NULL, a = 10000, b = 1, alpha_membership = NULL, alpha_c = rep(0.5, 100), beta_membership = NULL, beta_c = rep(0.5, 50), non_zero = TRUE)
 #'res <- biLCM(edges = sim.data$A, group1.id = NULL, group2.id = NULL, count.id = NULL, k = 4, tolerance = 1e-6, max.iter = 200)
+#'plot.compare.biLCM(res, sim.data, group1 = TRUE, nth = 1)
 #' }
 
 biLCM <- function(edges, 
