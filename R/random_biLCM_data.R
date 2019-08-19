@@ -11,7 +11,7 @@
 #'@param non_zero If non_zero = TRUE, repeat the data generating process untill each member has at least one interaction with others.
 #'@return A list of kappa_weight, alpha_membership, beta_membership, and then the randomly generated poisson count matrix A.
 
-#'@export
+#'@export random_biLCM_data
 
 random_biLCM_data <- function(m, 
                               n, 
@@ -79,8 +79,7 @@ rdirichlet = function(n, alpha) {
 #'@param nth Show the result of 'n'th member's community distribution
 #'@return Two pie plots: true and estimated community distribution (either alpha_iz's or beta_jz's)
 
-#'@useDynLib polnet, .registration = TRUE
-#'@export
+#'@export plot.compare.biLCM
 
 plot.compare.biLCM <- function(biLCM_Object,
                                simulated_data,
@@ -89,15 +88,15 @@ plot.compare.biLCM <- function(biLCM_Object,
   par(mfrow=c(1,2))
   
   if (group1) {
-    pie(sort(simulated_data$alpha[n,]), order(simulated_data$alpha[n,]), col = palette()[order(simulated_data$alpha[n,])], clockwise=TRUE,
-        main = paste0("True\nCommunity Distribution (i=",n,")"))
-    pie(sort(biLCM_Object$alpha[n,]), order(biLCM_Object$alpha[n,]), col = palette()[order(biLCM_Object$alpha[n,])], clockwise=TRUE,
-        main = paste0("Estimated\nCommunity Distribution (i=",n,")"))
+    pie(sort(simulated_data$alpha[nth,]), order(simulated_data$alpha[nth,]), clockwise=TRUE,
+        main = paste0("True\nCommunity Distribution (i=",nth,")"))
+    pie(sort(biLCM_Object$alpha[nth,]), order(biLCM_Object$alpha[nth,]), clockwise=TRUE,
+        main = paste0("Estimated\nCommunity Distribution (i=",nth,")"))
   } else {
-    pie(sort(simulated_data$beta[n,]), order(simulated_data$beta[n,]), col = palette()[order(simulated_data$beta[n,])], clockwise=TRUE,
-        main = paste0("True\nCommunity Distribution (j=",n,")"))
-    pie(sort(biLCM_Object$beta[n,]), order(biLCM_Object$beta[n,]), col = palette()[order(biLCM_Object$beta[n,])], clockwise=TRUE,
-        main = paste0("Estimated\nCommunity Distribution (j=",n,")"))
+    pie(sort(simulated_data$beta[nth,]), order(simulated_data$beta[nth,]), clockwise=TRUE,
+        main = paste0("True\nCommunity Distribution (j=",nth,")"))
+    pie(sort(biLCM_Object$beta[nth,]), order(biLCM_Object$beta[nth,]), clockwise=TRUE,
+        main = paste0("Estimated\nCommunity Distribution (j=",nth,")"))
   }
   
   par(mfrow=c(1,1))

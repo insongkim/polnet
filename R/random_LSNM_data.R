@@ -16,7 +16,6 @@
 #'@return A list of the latent group1 space, the latent group2 space, and then the randomly generated poisson count matrix A.
 
 #'@import MASS
-#'@useDynLib polnet, .registration = TRUE
 #'@export random_LSNM_data
 
 
@@ -109,7 +108,6 @@ l2_norm.sq <- function(vec1, vec2){
 #'@return A list of simulated data
 
 #'@import MASS
-#'@useDynLib polnet, .registration = TRUE
 #'@export
 
 # Generate clustered LSNM data
@@ -225,7 +223,6 @@ random_LSNM_data_cluster <- function(n.cluster=4,
 #'@return Does not return an object. Prints the proportion of latent space estimates that fell within the credible interval as well as the average error from the true latent space estimates.
 #'
 
-#'@useDynLib polnet, .registration = TRUE
 #'@export
 
 
@@ -249,7 +246,6 @@ compare.LSNM <- function(LSNM_Object,
 #'@param group2_cluster A vector representing the true cluster of group2
 #'@return Two plots: true latent space and estimated LSNM positions
 
-#'@useDynLib polnet, .registration = TRUE
 #'@export
 
 

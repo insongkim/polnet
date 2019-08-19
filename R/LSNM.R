@@ -436,7 +436,6 @@ summary.LSNM <- function(LSNM_Object,
 #' @param group1_cluster A vector representing the cluster of group1
 #' @param group2_cluster A vector representing the cluster of group2
 #' @return a plot of the posterior means
-#' @useDynLib polnet, .registration = TRUE
 #' @export
 
 plot.LSNM <- function(LSNM_Object,

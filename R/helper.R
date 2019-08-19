@@ -11,7 +11,6 @@
 #' @import igraph
 #' @import tidyr
 #' @return igraph object
-#' @useDynLib polnet, .registration = TRUE
 #' @export
 
 edges_to_igraph <- function(edges, 

@@ -5,7 +5,7 @@
 \title{Convert edges to igraph object}
 \usage{
 edges_to_igraph(edges, group1.id = NULL, group2.id = NULL,
-  count.id = NULL, vertices = NULL)
+  count.id = NULL, group1.cluster = NULL, group2.cluster = NULL)
 }
 \arguments{
 \item{edges}{Matrix or data.frame or igraph of connection strengths as counts}
