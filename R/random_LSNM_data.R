@@ -269,7 +269,10 @@ plot.compare.LSNM <- function(LSNM_Object,
 
   if (is.null(group1_col)) group1_col <- rep("black", m)
   if (is.null(group2_col)) group2_col <- rep("black", n)
-
+  
+  k <- length(unique(c(group1_cluster, group2_cluster)))
+  cols <- gg_color_hue(k)
+  
   if (D==1) {
     df_fit <- as.data.frame(LSNM_Object$stan_fitted_model)
     nms <- df_fit[ , grepl( "^col_embedding|^row_embedding|^col_factor|^row_factor" , names(df_fit) )]
@@ -285,12 +288,12 @@ plot.compare.LSNM <- function(LSNM_Object,
          xlab = "Estimate Dimension 1",
          ylab = "True Dimension 1",
          yaxt = "n",
-         col = group1_col,...)
+         col = cols[as.factor(group1_col)],...)
     points(x = col_elements,
            y = group2_space,
            pch = 0,
            cex = 1,
-           col = group2_col)
+           col = cols[as.factor(group2_col)])
 
   } else {
     row_size <- exp(group1_popularity) # size of group1
@@ -307,12 +310,12 @@ plot.compare.LSNM <- function(LSNM_Object,
          xlab = "Latent Space Dimension 1",
          ylab = "Latent Space Dimension 2",
          main = "True Latent Space",
-         col = group1_col, ...)
+         col = cols[as.factor(group1_col)], ...)
     points(x = group2_space[,1],
            y = group2_space[,2],
            pch = 0,
            cex = col_size,
-           col = group2_col)
+           col = cols[as.factor(group2_col)])
 
     plot.LSNM(LSNM_Object, group1_cluster, group2_cluster, main, legend, legend_position, ...)
     

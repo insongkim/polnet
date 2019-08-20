@@ -120,3 +120,81 @@ biLCM <- function(edges,
   class(out) <- "biLCM"
   return(out)
 }
+
+#'@name plot biLCM
+#'@param biLCM_Object A trained object of class biLCM
+#'@param group1 If group1 = TRUE, show the result of a member of group1 (i.e., alpha_iz's). Otherwise that of group2 (i.e., beta_jz's)
+#'@param nth Show the result of 'n'th member's community distribution
+#'@return A pie chart of estimated community distribution (either alpha_iz's or beta_jz's)
+
+#'@export plot.biLCM
+
+plot.biLCM <- function(biLCM_Object,
+                               group1 = TRUE,
+                               nth) {
+  par(mfrow=c(1,2))
+  
+  k <- length(biLCM_Object$kappa)
+  cols <- gg_color_hue(k, alpha = 0.7)
+  
+  if (group1) {
+    pie(sort(biLCM_Object$alpha[nth,]), order(biLCM_Object$alpha[nth,]), col = cols, clockwise=TRUE,
+        main = paste0("Estimated\nCommunity Distribution (i=",nth,")"))
+  } else {
+    pie(sort(biLCM_Object$beta[nth,]), order(biLCM_Object$beta[nth,]), col = cols, clockwise=TRUE,
+        main = paste0("Estimated\nCommunity Distribution (j=",nth,")"))
+  }
+  
+  par(mfrow=c(1,1))
+  
+}
+
+#'@name plot biLCM + LSNM
+#'@param biLCM_Object A trained object of class biLCM
+#'@param LSNM_Object A trained object of class LSNM
+#'@param group1_cluster A vector representing the cluster of group1
+#'@param group2_cluster A vector representing the cluster of group2
+#'@return plot
+#'@import scatterpie
+#'@export plot.biLCM.LSNM
+
+plot.biLCM.LSNM <- function(biLCM_object,
+                            LSNM_Object,
+                            group1_cluster = NULL,
+                            group2_cluster = NULL,
+                            main = "Estimated LSNM Positions",
+                            legend = c("Group1", "Group2"),
+                            legend_position = "topleft",
+                            ...){
+  
+  m <- LSNM_Object$stan_fitted_model@par_dims$row_factor_adj # number of group1
+  n <- LSNM_Object$stan_fitted_model@par_dims$col_factor_adj # number of group2
+  D <- LSNM_Object$stan_fitted_model@par_dims$cov_embedding_diag # number of dimensions
+  
+  if (is.null(group1_cluster)) group1_cluster <- rep("black", m)
+  if (is.null(group2_cluster)) group2_cluster <- rep("black", n)
+  
+  df_fit <- as.data.frame(LSNM_Object$stan_fitted_model)
+  nms <- df_fit[ , grepl( "^col_embedding|^row_embedding|^col_factor|^row_factor" , names(df_fit) )]
+  plot.data <- colMeans(nms) # posterior mean
+  
+  if (D==2) {
+    dat <- data.frame(x = c(plot.data[paste0("row_embedding[",1:m,",1]")],
+                            plot.data[paste0("col_embedding[1,",1:n,"]")]),
+                      y = c(plot.data[paste0("row_embedding[",1:m,",2]")],
+                            plot.data[paste0("col_embedding[2,",1:n,"]")]),
+                      group = c(rep("group1",m), rep("group2",n)))
+    community <- as.data.frame(rbind(biLCM_object$alpha, biLCM_object$beta))
+    colnames(community) <- LETTERS[1:length(biLCM_object$kappa)]
+    dat <- cbind(dat, community)
+    
+    ggplot() + geom_scatterpie(aes(x=x, y=y, group=group), data=dat,
+                               cols=LETTERS[1:length(biLCM_object$kappa)], color=NA, alpha = 0.7) + 
+      coord_equal() + theme_classic() + theme(legend.position = legend_position) + 
+      xlab("Latent Space Dimension1") + ylab("Latent Space Dimension2") +
+      labs(fill = "Community")
+    
+  }
+  
+}
+

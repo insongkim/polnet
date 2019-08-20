@@ -87,15 +87,21 @@ plot.compare.biLCM <- function(biLCM_Object,
                                nth) {
   par(mfrow=c(1,2))
   
+  k1 <- length(simulated_data$kappa)
+  cols1 <- gg_color_hue(k1, alpha = 0.7)
+  
+  k2 <- length(biLCM_Object$kappa)
+  cols2 <- gg_color_hue(k2, alpha = 0.7)
+  
   if (group1) {
-    pie(sort(simulated_data$alpha[nth,]), order(simulated_data$alpha[nth,]), clockwise=TRUE,
+    pie(sort(simulated_data$alpha[nth,]), order(simulated_data$alpha[nth,]), col = cols1, clockwise=TRUE,
         main = paste0("True\nCommunity Distribution (i=",nth,")"))
-    pie(sort(biLCM_Object$alpha[nth,]), order(biLCM_Object$alpha[nth,]), clockwise=TRUE,
+    pie(sort(biLCM_Object$alpha[nth,]), order(biLCM_Object$alpha[nth,]), col = cols2, clockwise=TRUE,
         main = paste0("Estimated\nCommunity Distribution (i=",nth,")"))
   } else {
-    pie(sort(simulated_data$beta[nth,]), order(simulated_data$beta[nth,]), clockwise=TRUE,
+    pie(sort(simulated_data$beta[nth,]), order(simulated_data$beta[nth,]), col = cols1, clockwise=TRUE,
         main = paste0("True\nCommunity Distribution (j=",nth,")"))
-    pie(sort(biLCM_Object$beta[nth,]), order(biLCM_Object$beta[nth,]), clockwise=TRUE,
+    pie(sort(biLCM_Object$beta[nth,]), order(biLCM_Object$beta[nth,]), col = cols2, clockwise=TRUE,
         main = paste0("Estimated\nCommunity Distribution (j=",nth,")"))
   }
   

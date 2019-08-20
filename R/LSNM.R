@@ -452,6 +452,9 @@ plot.LSNM <- function(LSNM_Object,
 
   if (is.null(group1_cluster)) group1_cluster <- rep("black", m)
   if (is.null(group2_cluster)) group2_cluster <- rep("black", n)
+  
+  k <- length(unique(c(group1_cluster, group2_cluster)))
+  cols <- gg_color_hue(k)
 
   df_fit <- as.data.frame(LSNM_Object$stan_fitted_model)
   nms <- df_fit[ , grepl( "^col_embedding|^row_embedding|^col_factor|^row_factor" , names(df_fit) )]
@@ -485,7 +488,7 @@ plot.LSNM <- function(LSNM_Object,
          ylab = "",
          yaxt = "n",
          main = main,
-         col = group1_cluster,...)
+         col = cols[as.factor(group1_cluster)],...)
     axis(side = 2,
          at = row_ord,
          labels = row_lab)
@@ -493,7 +496,7 @@ plot.LSNM <- function(LSNM_Object,
            y = col_ord,
            pch = 0,
            cex = col_size,
-           col = group2_cluster)
+           col = cols[as.factor(group2_cluster)])
     axis(side = 4,
          at = col_ord,
          labels = col_lab)
@@ -507,9 +510,9 @@ plot.LSNM <- function(LSNM_Object,
 
   } else {
     row_size <- exp(plot.data[paste0("row_factor_adj[",1:m,"]")]) # size of group1
-    row_size <- 2*row_size/max(row_size)
+    row_size <- 2*row_size/max(row_size)+1
     col_size <- exp(plot.data[paste0("col_factor_adj[",1:n,"]")]) # size of group2
-    col_size <- 2*col_size/max(col_size)
+    col_size <- 2*col_size/max(col_size)+1
 
     plot(x = plot.data[paste0("row_embedding[",1:m,",1]")],
          y = plot.data[paste0("row_embedding[",1:m,",2]")],
@@ -518,12 +521,12 @@ plot.LSNM <- function(LSNM_Object,
          xlab = "Latent Space Dimension 1",
          ylab = "Latent Space Dimension 2",
          main = main,
-         col = group1_cluster,...)
+         col = cols[as.factor(group1_cluster)],...)
     points(x = plot.data[paste0("col_embedding[1,",1:n,"]")],
            y = plot.data[paste0("col_embedding[2,",1:n,"]")],
            pch = 0,
            cex = col_size,
-           col = group2_cluster)
+           col = cols[as.factor(group2_cluster)])
     legend(legend_position,
            legend = legend,
            bg = "transparent",
@@ -533,4 +536,9 @@ plot.LSNM <- function(LSNM_Object,
            inset = 0.01)
   }
 
+}
+
+gg_color_hue <- function(n, alpha = 1) {
+  hues = seq(15, 375, length = n + 1)
+  hcl(h = hues, l = 65, c = 100, alpha)[1:n]
 }
