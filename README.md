@@ -131,6 +131,6 @@ bilcm_res <- biLCM(edges = sim.data$A, group1.id = NULL, group2.id = NULL, count
                    tolerance = 1e-6, max.iter = 200)
 plot.biLCM.position(biLCM_Object = bilcm_res, LSNM_Object = lsnm_res, legend_position = "none")
 ```
-<p align="center">
+#<p align="center">
 ![](https://github.com/insongkim/repo-data/blob/master/polnet/bilcm_lsnm.png)
-</p>
+#</p>
