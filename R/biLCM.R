@@ -158,7 +158,9 @@ plot.biLCM <- function(biLCM_Object,
 #'@param LSNM_Object A trained object of class LSNM. An optional argument, required if \code{group1_latent_position} and \code{group2_latent_position} are missing
 #'@param main
 #'@param legend_position
+#'@param radius
 #'@return plot
+#'@import ggplot2
 #'@import scatterpie
 #'@export plot.biLCM.position
 
@@ -167,7 +169,8 @@ plot.biLCM.position <- function(biLCM_Object,
                                 group2_latent_position = NULL,
                                 LSNM_Object = NULL,
                                 main = "biLCM Community Distribution",
-                                legend_position = "topleft"){
+                                legend_position = "topleft",
+                                radius = 0.1){
   if(class(biLCM_Object)!="biLCM") stop("'biLCM_Object' is not of class 'biLCM'.\n")
   
   m <- dim(biLCM_Object$alpha)[1] # number of group1
@@ -195,7 +198,7 @@ plot.biLCM.position <- function(biLCM_Object,
       colnames(community) <- LETTERS[1:length(biLCM_Object$kappa)]
       dat <- cbind(dat, community)
       
-      ggplot() + geom_scatterpie(aes(x=x, y=y, group=group), data=dat,
+      ggplot() + geom_scatterpie(aes(x=x, y=y, group=group, r=radius), data=dat,
                                  cols=LETTERS[1:length(biLCM_Object$kappa)], color=NA, alpha = 0.7) + 
         coord_equal() + theme_classic() + theme(legend.position = legend_position, plot.title = element_text(hjust=0.5)) + 
         scale_y_continuous(breaks=dat$y, labels=dat$name) +
@@ -211,7 +214,7 @@ plot.biLCM.position <- function(biLCM_Object,
       colnames(community) <- LETTERS[1:length(biLCM_Object$kappa)]
       dat <- cbind(dat, community)
       
-      ggplot() + geom_scatterpie(aes(x=x, y=y, group=group), data=dat,
+      ggplot() + geom_scatterpie(aes(x=x, y=y, group=group, r=radius), data=dat,
                                  cols=LETTERS[1:length(biLCM_Object$kappa)], color=NA, alpha = 0.7) + 
         coord_equal() + theme_classic() + theme(legend.position = legend_position, plot.title = element_text(hjust=0.5)) + 
         xlab("Latend Space Dimension 1") + ylab("Latend Space Dimension 2") +
@@ -240,7 +243,7 @@ plot.biLCM.position <- function(biLCM_Object,
       colnames(community) <- LETTERS[1:length(biLCM_Object$kappa)]
       dat <- cbind(dat, community)
       
-      ggplot() + geom_scatterpie(aes(x=x, y=y, group=group), data=dat,
+      ggplot() + geom_scatterpie(aes(x=x, y=y, group=group, r=radius), data=dat,
                                  cols=LETTERS[1:length(biLCM_Object$kappa)], color=NA, alpha = 0.7) + 
         coord_equal() + theme_classic() + theme(legend.position = legend_position, plot.title = element_text(hjust=0.5)) + 
         scale_y_continuous(breaks=dat$y, labels=dat$name) +
@@ -257,7 +260,7 @@ plot.biLCM.position <- function(biLCM_Object,
       colnames(community) <- LETTERS[1:length(biLCM_Object$kappa)]
       dat <- cbind(dat, community)
       
-      ggplot() + geom_scatterpie(aes(x=x, y=y, group=group), data=dat,
+      ggplot() + geom_scatterpie(aes(x=x, y=y, group=group, r=radius), data=dat,
                                  cols=LETTERS[1:length(biLCM_Object$kappa)], color=NA, alpha = 0.7) + 
         coord_equal() + theme_classic() + theme(legend.position = legend_position, plot.title = element_text(hjust=0.5)) + 
         xlab("LSNM Dimension 1") + ylab("LSNM Dimension 2") +
@@ -265,4 +268,3 @@ plot.biLCM.position <- function(biLCM_Object,
     }
   }
 }
-

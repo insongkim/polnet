@@ -20,7 +20,8 @@ Imports:
     MASS (>= 7.3-51.1),
     igraph (>= 1.2.4),
     tidyr (>= 0.8.3),
-    scatterpie
+    scatterpie,
+    ggplot2
 LinkingTo: 
     BH (>= 1.69.0-1),
     Rcpp,

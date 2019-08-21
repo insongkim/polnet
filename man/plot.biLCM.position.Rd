@@ -6,7 +6,8 @@
 \usage{
 plot.biLCM.position(biLCM_Object, group1_latent_position = NULL,
   group2_latent_position = NULL, LSNM_Object = NULL,
-  main = "biLCM Community Distribution", legend_position = "topleft")
+  main = "biLCM Community Distribution", legend_position = "topleft",
+  radius = 0.1)
 }
 \arguments{
 \item{biLCM_Object}{A trained object of class biLCM}
