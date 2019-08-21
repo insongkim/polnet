@@ -284,11 +284,16 @@ plot.compare.LSNM <- function(LSNM_Object,
 
     row_elements <- plot.data[paste0("row_embedding[",1:m,",1]")]
     col_elements <- plot.data[paste0("col_embedding[",1:n,",1]")]
+    
+    row_size <- exp(group1_popularity) # size of group1
+    row_size <- (row_size-min(row_size))/(max(row_size)-min(row_size)) + 0.5
+    col_size <- exp(group2_popularity) # size of group2
+    col_size <- (col_size-min(row_size))/(max(col_size)-min(col_size)) + 0.5
 
     plot(x = row_elements,
          y = group1_space,
          pch = 1,
-         cex = 1,
+         cex = row_size,
          xlab = "Estimate Dimension 1",
          ylab = "True Dimension 1",
          yaxt = "n",
@@ -296,14 +301,14 @@ plot.compare.LSNM <- function(LSNM_Object,
     points(x = col_elements,
            y = group2_space,
            pch = 0,
-           cex = 1,
+           cex = col_size,
            col = cols[as.factor(group2_col)])
 
   } else {
     row_size <- exp(group1_popularity) # size of group1
-    row_size <- 2*row_size/max(row_size)
+    row_size <- (row_size-min(row_size))/(max(row_size)-min(row_size)) + 0.5
     col_size <- exp(group2_popularity) # size of group2
-    col_size <- 2*col_size/max(col_size)
+    col_size <- (col_size-min(row_size))/(max(col_size)-min(col_size)) + 0.5
 
     par(mfrow=c(1,2))
 

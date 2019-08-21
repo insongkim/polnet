@@ -72,8 +72,8 @@ LSNM <- function(edges,
     stop("fixed.actor.object must be of class LSNM_fixed_actors.")
   if (D!=dim(fixed_row_embedding)[2]) 
     stop("Invalid number of columns in 'fixed_row_embedding'")
-  if (D!=dim(fixed_col_embedding)[2]) 
-    stop("Invalid number of columns in 'fixed_col_embedding'")
+  if (D!=dim(fixed_col_embedding)[1]) 
+    stop("Invalid number of rows in 'fixed_col_embedding'")
   
   if (link_function=="bernoulli") n <- 1
   
@@ -468,9 +468,9 @@ plot.LSNM <- function(LSNM_Object,
 
   if (D==1) {
     row_size <- exp(plot.data[paste0("row_factor_adj[",1:m,"]")]) # size of group1
-    row_size <- 2*row_size/max(row_size)
+    row_size <- (row_size-min(row_size))/(max(row_size)-min(row_size)) + 0.5
     col_size <- exp(plot.data[paste0("col_factor_adj[",1:n,"]")]) # size of group2
-    col_size <- 2*col_size/max(col_size)
+    col_size <- (col_size-min(col_size))/(max(col_size)-min(col_size)) + 0.5
 
     row_elements <- plot.data[paste0("row_embedding[",1:m,",1]")]
     col_elements <- plot.data[paste0("col_embedding[1,",1:n,"]")]
@@ -516,9 +516,9 @@ plot.LSNM <- function(LSNM_Object,
 
   } else {
     row_size <- exp(plot.data[paste0("row_factor_adj[",1:m,"]")]) # size of group1
-    row_size <- 2*row_size/max(row_size)+1
+    row_size <- (row_size-min(row_size))/(max(row_size)-min(row_size)) + 0.5
     col_size <- exp(plot.data[paste0("col_factor_adj[",1:n,"]")]) # size of group2
-    col_size <- 2*col_size/max(col_size)+1
+    col_size <- (col_size-min(col_size))/(max(col_size)-min(col_size)) + 0.5
 
     plot(x = plot.data[paste0("row_embedding[",1:m,",1]")],
          y = plot.data[paste0("row_embedding[",1:m,",2]")],

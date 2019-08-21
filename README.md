@@ -44,7 +44,7 @@ res <- biLCM(edges = sim.data$A, group1.id = NULL, group2.id = NULL, count.id = 
 plot.compare.biLCM(res, sim.data, group1 = TRUE, nth = 10)
 ```
 
-The following plot compares true and estimated community distribution of the 10th actor in the first group (i.e., (\alpha_{10,1},\alpha_{10,2},\alpha_{10,3},\alpha_{10,4})). Note that the order of communities is permutation-invariant.
+The following plot compares true and estimated community distribution of the 10th actor in the first group (*i.e.*, (&alpha;<sub>10,1</sub>,&alpha;<sub>10,2</sub>,&alpha;<sub>10,3</sub>,&alpha;<sub>10,4</sub>)). Note that the order of communities is permutation-invariant.
 ![](https://github.com/insongkim/repo-data/blob/master/polnet/bilcm_compare.png)
 
 ### LSNM with variational inference
@@ -131,4 +131,4 @@ bilcm_res <- biLCM(edges = sim.data$A, group1.id = NULL, group2.id = NULL, count
                    tolerance = 1e-6, max.iter = 200)
 plot.biLCM.position(biLCM_Object = bilcm_res, LSNM_Object = lsnm_res, legend_position = "none")
 ```
-![](https://github.com/insongkim/repo-data/blob/master/polnet/bilcm_lsnm.png)
+![](https://github.com/insongkim/repo-data/blob/master/polnet/bilcm_lsnm.png?style=centerme)
