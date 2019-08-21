@@ -70,7 +70,11 @@ LSNM <- function(edges,
     stop("'method' should be either 'vi' or 'mcmc' or 'vi-mcmc")
   if (!is.null(fixed.actor.object) & class(fixed.actor.object)!="LSNM_fixed_actors")
     stop("fixed.actor.object must be of class LSNM_fixed_actors.")
-
+  if (D!=dim(fixed_row_embedding)[2]) 
+    stop("Invalid number of columns in 'fixed_row_embedding'")
+  if (D!=dim(fixed_col_embedding)[2]) 
+    stop("Invalid number of columns in 'fixed_col_embedding'")
+  
   if (link_function=="bernoulli") n <- 1
   
   ## Create fixed.actor.list if NULL
@@ -416,6 +420,7 @@ min_dist_to_octant_line <- function(v){
 summary.LSNM <- function(LSNM_Object,
                          low_perc = 0.1,
                          high_perc = 0.9){
+  if(class(LSNM_Object)!="LSNM") stop("'LSNM_Object' is not of class 'LSNM'.\n")
 
   df_fit <- as.data.frame(LSNM_Object$stan_fitted_model)
   nms <- df_fit[ , grepl( "^col_embedding|^row_embedding" , names(df_fit) )]
@@ -445,7 +450,8 @@ plot.LSNM <- function(LSNM_Object,
                       legend = c("Group1", "Group2"),
                       legend_position = "topleft",
                       ...){
-
+  if(class(LSNM_Object)!="LSNM") stop("'LSNM_Object' is not of class 'LSNM'.\n")
+  
   m <- LSNM_Object$stan_fitted_model@par_dims$row_factor_adj # number of group1
   n <- LSNM_Object$stan_fitted_model@par_dims$col_factor_adj # number of group2
   D <- LSNM_Object$stan_fitted_model@par_dims$cov_embedding_diag # number of dimensions

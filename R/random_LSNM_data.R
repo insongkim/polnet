@@ -229,6 +229,8 @@ random_LSNM_data_cluster <- function(n.cluster=4,
 compare.LSNM <- function(LSNM_Object,
                          group1_space,
                          group2_space){
+  if(class(LSNM_Object)!="LSNM") stop("'LSNM_Object' is not of class 'LSNM'.\n")
+  
   lsnmobj <- summary.LSNM(LSNM_Object)
   l_ordered <- lsnmobj[order(rownames(lsnmobj)), ]
   tru_pars <- c(as.vector(t(group1_space)), as.vector(t(group2_space)))
@@ -260,6 +262,8 @@ plot.compare.LSNM <- function(LSNM_Object,
                               legend = c("Group1", "Group2"),
                               legend_position = "topleft",
                               ...){
+  if(class(LSNM_Object)!="LSNM") stop("'LSNM_Object' is not of class 'LSNM'.\n")
+  
   D <- ifelse(is.null(ncol(group1_space)),1,2) # number of dimensions
   m <- length(group1_space)/D
   n <- length(group2_space)/D

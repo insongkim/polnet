@@ -29,17 +29,17 @@ biLCM <- function(edges,
   
   ## Warning for missing parameter
   if (missing(edges))
-    stop("'edges' should be provided")
+    stop("'edges' should be provided.\n")
   if (!class(edges)%in%c("matrix","data.frame", "igraph"))
-    stop("'edges' should be matrix or data.frame or igraph")
+    stop("'edges' should be matrix or data.frame or igraph.\n")
   if (class(edges)=="data.frame"&is.null(group1.id))
-    stop("'group1.id' should be provided")
+    stop("'group1.id' should be provided.\n")
   if (class(edges)=="data.frame"&is.null(group2.id))
-    stop("'group2.id' should be provided")
+    stop("'group2.id' should be provided.\n")
   if (class(edges)%in%c("data.frame", "igraph")&is.null(count.id))
-    stop("'count.id' should be provided")
+    stop("'count.id' should be provided.\n")
   if (is.null(k))
-    stop("'k' should be provided")
+    stop("'k' should be provided.\n")
   
   # Input data
   if (class(edges)=="matrix") {
@@ -130,8 +130,9 @@ biLCM <- function(edges,
 #'@export plot.biLCM
 
 plot.biLCM <- function(biLCM_Object,
-                               group1 = TRUE,
-                               nth) {
+                       group1 = TRUE,
+                       nth) {
+  if(class(biLCM_Object)!="biLCM") stop("'biLCM_Object' is not of class 'biLCM'.\n")
   par(mfrow=c(1,2))
   
   k <- length(biLCM_Object$kappa)
@@ -149,52 +150,119 @@ plot.biLCM <- function(biLCM_Object,
   
 }
 
-#'@name plot biLCM + LSNM
+#'Plot biLCM with latent position
+#'
 #'@param biLCM_Object A trained object of class biLCM
-#'@param LSNM_Object A trained object of class LSNM
-#'@param group1_cluster A vector representing the cluster of group1
-#'@param group2_cluster A vector representing the cluster of group2
+#'@param group1_space A matrix representing the latent group1 space. This matrix should have rows equal to the number of group1, and columns equal to the dimensionality of the latent space, either 1 or 2.
+#'@param group2_space A matrix representing the latent group2 space. This matrix should have rows equal to the number of group2, and columns equal to the dimensionality of the latent space, either 1 or 2.
+#'@param LSNM_Object A trained object of class LSNM. An optional argument, required if \code{group1_latent_position} and \code{group2_latent_position} are missing
+#'@param main
+#'@param legend_position
 #'@return plot
 #'@import scatterpie
-#'@export plot.biLCM.LSNM
+#'@export plot.biLCM.position
 
-plot.biLCM.LSNM <- function(biLCM_object,
-                            LSNM_Object,
-                            group1_cluster = NULL,
-                            group2_cluster = NULL,
-                            main = "Estimated LSNM Positions",
-                            legend = c("Group1", "Group2"),
-                            legend_position = "topleft",
-                            ...){
+plot.biLCM.position <- function(biLCM_Object,
+                                group1_latent_position = NULL,
+                                group2_latent_position = NULL,
+                                LSNM_Object = NULL,
+                                main = "biLCM Community Distribution",
+                                legend_position = "topleft"){
+  if(class(biLCM_Object)!="biLCM") stop("'biLCM_Object' is not of class 'biLCM'.\n")
   
-  m <- LSNM_Object$stan_fitted_model@par_dims$row_factor_adj # number of group1
-  n <- LSNM_Object$stan_fitted_model@par_dims$col_factor_adj # number of group2
-  D <- LSNM_Object$stan_fitted_model@par_dims$cov_embedding_diag # number of dimensions
+  m <- dim(biLCM_Object$alpha)[1] # number of group1
+  n <- dim(biLCM_Object$beta)[1] # number of group2
   
-  if (is.null(group1_cluster)) group1_cluster <- rep("black", m)
-  if (is.null(group2_cluster)) group2_cluster <- rep("black", n)
+  if((is.null(group1_latent_position)|is.null(group2_latent_position))&is.null(LSNM_Object)) stop("Either group1_latent_position/group2_latent_position or LSNM_Object should be provided.\n")
   
-  df_fit <- as.data.frame(LSNM_Object$stan_fitted_model)
-  nms <- df_fit[ , grepl( "^col_embedding|^row_embedding|^col_factor|^row_factor" , names(df_fit) )]
-  plot.data <- colMeans(nms) # posterior mean
-  
-  if (D==2) {
-    dat <- data.frame(x = c(plot.data[paste0("row_embedding[",1:m,",1]")],
-                            plot.data[paste0("col_embedding[1,",1:n,"]")]),
-                      y = c(plot.data[paste0("row_embedding[",1:m,",2]")],
-                            plot.data[paste0("col_embedding[2,",1:n,"]")]),
-                      group = c(rep("group1",m), rep("group2",n)))
-    community <- as.data.frame(rbind(biLCM_object$alpha, biLCM_object$beta))
-    colnames(community) <- LETTERS[1:length(biLCM_object$kappa)]
-    dat <- cbind(dat, community)
+  if(is.null(LSNM_Object)) {
+    if(dim(group1_latent_position)[1]!=m) stop("Invalid number of rows in 'group1_latent_position'.\n")
+    if(dim(group2_latent_position)[1]!=n) stop("Invalid number of rows in 'group2_latent_position'.\n")
     
-    ggplot() + geom_scatterpie(aes(x=x, y=y, group=group), data=dat,
-                               cols=LETTERS[1:length(biLCM_object$kappa)], color=NA, alpha = 0.7) + 
-      coord_equal() + theme_classic() + theme(legend.position = legend_position) + 
-      xlab("Latent Space Dimension1") + ylab("Latent Space Dimension2") +
-      labs(fill = "Community")
+    D <- dim(group1_latent_position)[2]
     
+    if(dim(group2_latent_position)[2]!=D) stop("Invalid number of cols in either 'group1_latent_position' or 'group2_latent_position'.\n")
+    
+    if(D==1) {
+      dat <- data.frame(x = c(group1_latent_position[,1],
+                              group2_latent_position[,1]),
+                        name = c(paste0("group1.",1:m), paste0("group2.",1:n)),
+                        group = c(rep("group1",m), rep("group2",n)))
+      dat$y <- match(dat$x, sort(dat$x, decreasing = T)) 
+      dat$y <- (dat$y/max(dat$y))*(range(dat$x)[2]-range(dat$x)[1])
+      
+      community <- as.data.frame(rbind(biLCM_Object$alpha, biLCM_Object$beta))
+      colnames(community) <- LETTERS[1:length(biLCM_Object$kappa)]
+      dat <- cbind(dat, community)
+      
+      ggplot() + geom_scatterpie(aes(x=x, y=y, group=group), data=dat,
+                                 cols=LETTERS[1:length(biLCM_Object$kappa)], color=NA, alpha = 0.7) + 
+        coord_equal() + theme_classic() + theme(legend.position = legend_position, plot.title = element_text(hjust=0.5)) + 
+        scale_y_continuous(breaks=dat$y, labels=dat$name) +
+        xlab("Latent Space Dimension 1") + ylab(NULL) +
+        labs(title = main, fill = "Community")
+    } else if (D==2) {
+      dat <- data.frame(x = c(group1_latent_position[,1],
+                              group2_latent_position[,1]),
+                        y = c(group1_latent_position[,2],
+                              group2_latent_position[,2]),
+                        group = c(rep("group1",m), rep("group2",n)))
+      community <- as.data.frame(rbind(biLCM_Object$alpha, biLCM_Object$beta))
+      colnames(community) <- LETTERS[1:length(biLCM_Object$kappa)]
+      dat <- cbind(dat, community)
+      
+      ggplot() + geom_scatterpie(aes(x=x, y=y, group=group), data=dat,
+                                 cols=LETTERS[1:length(biLCM_Object$kappa)], color=NA, alpha = 0.7) + 
+        coord_equal() + theme_classic() + theme(legend.position = legend_position, plot.title = element_text(hjust=0.5)) + 
+        xlab("Latend Space Dimension 1") + ylab("Latend Space Dimension 2") +
+        labs(title = main, fill = "Community")
+    }
+    
+  } else {
+    if(LSNM_Object$stan_fitted_model@par_dims$row_factor_adj!=m) stop("Invalid number of group1 members in 'LSNM_Object'")
+    if(LSNM_Object$stan_fitted_model@par_dims$col_factor_adj!=n) stop("Invalid number of group2 members in 'LSNM_Object'")
+    
+    D <- LSNM_Object$stan_fitted_model@par_dims$cov_embedding_diag # number of dimensions
+    
+    df_fit <- as.data.frame(LSNM_Object$stan_fitted_model)
+    nms <- df_fit[ , grepl( "^col_embedding|^row_embedding|^col_factor|^row_factor" , names(df_fit) )]
+    plot.data <- colMeans(nms) # posterior mean
+    
+    if (D==1) {
+      dat <- data.frame(x = c(plot.data[paste0("row_embedding[",1:m,",1]")],
+                              plot.data[paste0("col_embedding[1,",1:n,"]")]),
+                        name = c(paste0("group1.",1:m), paste0("group2.",1:n)),
+                        group = c(rep("group1",m), rep("group2",n)))
+      dat$y <- match(dat$x, sort(dat$x, decreasing = T)) 
+      dat$y <- (dat$y/max(dat$y))*(range(dat$x)[2]-range(dat$x)[1])
+      
+      community <- as.data.frame(rbind(biLCM_Object$alpha, biLCM_Object$beta))
+      colnames(community) <- LETTERS[1:length(biLCM_Object$kappa)]
+      dat <- cbind(dat, community)
+      
+      ggplot() + geom_scatterpie(aes(x=x, y=y, group=group), data=dat,
+                                 cols=LETTERS[1:length(biLCM_Object$kappa)], color=NA, alpha = 0.7) + 
+        coord_equal() + theme_classic() + theme(legend.position = legend_position, plot.title = element_text(hjust=0.5)) + 
+        scale_y_continuous(breaks=dat$y, labels=dat$name) +
+        xlab("LSNM Dimension 1") + ylab(NULL) +
+        labs(title = main, fill = "Community")
+      
+    } else if (D==2) {
+      dat <- data.frame(x = c(plot.data[paste0("row_embedding[",1:m,",1]")],
+                              plot.data[paste0("col_embedding[1,",1:n,"]")]),
+                        y = c(plot.data[paste0("row_embedding[",1:m,",2]")],
+                              plot.data[paste0("col_embedding[2,",1:n,"]")]),
+                        group = c(rep("group1",m), rep("group2",n)))
+      community <- as.data.frame(rbind(biLCM_Object$alpha, biLCM_Object$beta))
+      colnames(community) <- LETTERS[1:length(biLCM_Object$kappa)]
+      dat <- cbind(dat, community)
+      
+      ggplot() + geom_scatterpie(aes(x=x, y=y, group=group), data=dat,
+                                 cols=LETTERS[1:length(biLCM_Object$kappa)], color=NA, alpha = 0.7) + 
+        coord_equal() + theme_classic() + theme(legend.position = legend_position, plot.title = element_text(hjust=0.5)) + 
+        xlab("LSNM Dimension 1") + ylab("LSNM Dimension 2") +
+        labs(title = main, fill = "Community")
+    }
   }
-  
 }
 

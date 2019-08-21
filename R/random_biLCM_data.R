@@ -29,7 +29,7 @@ random_biLCM_data <- function(m,
     # Generating kappa
     if(is.null(kappa_weight)){
       if(is.null(a) | is.null(b)){
-        stop("Invalid Kappa Parameters")
+        stop("Invalid Kappa Parameters.\n")
       }else{
         kappa_weight <- rgamma(k, shape = a, rate = b)
       }
@@ -38,7 +38,7 @@ random_biLCM_data <- function(m,
     # Generating alpha
     if(is.null(alpha_membership)){
       if(is.null(alpha_c)){
-        stop("Invalid Alpha Parameters")
+        stop("Invalid Alpha Parameters.\n")
       }else{
         alpha_membership  <- t(rdirichlet(k, alpha_c))
       }
@@ -47,7 +47,7 @@ random_biLCM_data <- function(m,
     # Generating beta
     if(is.null(beta_membership)){
       if(is.null(beta_c)){
-        stop("Invalid Alpha Parameters")
+        stop("Invalid Alpha Parameters.\n")
       }else{
         beta_membership  <- t(rdirichlet(k, beta_c))
       }
@@ -85,6 +85,8 @@ plot.compare.biLCM <- function(biLCM_Object,
                                simulated_data,
                                group1 = TRUE,
                                nth) {
+  if(class(biLCM_Object)!="biLCM") stop("'biLCM_object' is not of class 'biLCM'.\n")
+  
   par(mfrow=c(1,2))
   
   k1 <- length(simulated_data$kappa)
