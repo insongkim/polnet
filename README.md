@@ -45,7 +45,7 @@ plot.compare.biLCM(res, sim.data, group1 = TRUE, nth = 10)
 ```
 
 The following plot compares true and estimated community distribution of the 10th actor in the first group (*i.e.*, (&alpha;<sub>10,1</sub>,&alpha;<sub>10,2</sub>,&alpha;<sub>10,3</sub>,&alpha;<sub>10,4</sub>)). Note that the order of communities is permutation-invariant.
-![](https://github.com/insongkim/repo-data/blob/master/polnet/bilcm_compare2.png)
+![](https://github.com/insongkim/repo-data/blob/master/polnet/bilcm_compare2.png?raw=true)
 
 ### LSNM with variational inference
 
@@ -64,7 +64,7 @@ plot.compare.LSNM(res, sim.data$LSNM_data$Theta, sim.data$LSNM_data$Psi, sim.dat
                   sim.data$group2.popularity, sim.data$group1.cluster, sim.data$group2.cluster, 
                   legend_position = "center")
 ```
-![](https://github.com/insongkim/repo-data/blob/master/polnet/lsnm_short_ex_newpalette2.png)
+![](https://github.com/insongkim/repo-data/blob/master/polnet/lsnm_short_ex_newpalette2.png?raw=true)
 
 ### LSNM with MCMC
 
@@ -115,7 +115,7 @@ plot.compare.LSNM(res.mcmc, sim.data$LSNM_data$Theta, sim.data$LSNM_data$Psi, si
                   sim.data$group2.popularity, sim.data$group1.cluster, sim.data$group2.cluster, 
                   legend_position = "center")
 ```
-![](https://github.com/insongkim/repo-data/blob/master/polnet/lsnm_mcmc_ex_newpalette2.png)
+![](https://github.com/insongkim/repo-data/blob/master/polnet/lsnm_mcmc_ex_newpalette2.png?raw=true)
 
 ### biLCM with latent position
 The pie charts of biLCM can be combined with the latent position of members as shown in figure 8 of the paper. `plot.biLCM.position` plots legislation community distributions estimated by biLCM at their corresponding latent position. The following plot combines the result of biLCM with the latent position estimated by LSNM. 
@@ -132,5 +132,5 @@ bilcm_res <- biLCM(edges = sim.data$A, group1.id = NULL, group2.id = NULL, count
 plot.biLCM.position(biLCM_Object = bilcm_res, LSNM_Object = lsnm_res, legend_position = "none")
 ```
 <p align="center">
-  <img width="500" height="500" src="https://github.com/insongkim/repo-data/blob/master/polnet/bilcm_lsnm2.png">
+  <img width="500" height="500" src="https://github.com/insongkim/repo-data/blob/master/polnet/bilcm_lsnm2.png?raw=true">
 </p>
