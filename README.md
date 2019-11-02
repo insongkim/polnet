@@ -64,7 +64,7 @@ plot.compare.LSM(res, sim.data$LSM_data$Theta, sim.data$LSM_data$Psi, sim.data$g
                   sim.data$group2.popularity, sim.data$group1.cluster, sim.data$group2.cluster, 
                   legend_position = "center")
 ```
-![](https://github.com/insongkim/repo-data/blob/master/polnet/LSNM_short_ex_newpalette2.png?raw=true)
+![](https://github.com/insongkim/repo-data/blob/master/polnet/lsnm_short_ex_newpalette2.png?raw=true)
 
 ### LSM with MCMC
 
@@ -115,7 +115,7 @@ plot.compare.LSM(res.mcmc, sim.data$LSM_data$Theta, sim.data$LSM_data$Psi, sim.d
                   sim.data$group2.popularity, sim.data$group1.cluster, sim.data$group2.cluster, 
                   legend_position = "center")
 ```
-![](https://github.com/insongkim/repo-data/blob/master/polnet/LSNM_mcmc_ex_newpalette2.png?raw=true)
+![](https://github.com/insongkim/repo-data/blob/master/polnet/lsnm_mcmc_ex_newpalette2.png?raw=true)
 
 ### biLCM with latent position
 The pie charts of biLCM can be combined with the latent position of members as shown in figure 8 of the paper. `plot.biLCM.position` plots legislation community distributions estimated by biLCM at their corresponding latent position. The following plot combines the result of biLCM with the latent position estimated by LSM. 
@@ -132,5 +132,5 @@ bilcm_res <- biLCM(edges = sim.data$A, group1.id = NULL, group2.id = NULL, count
 plot.biLCM.position(biLCM_Object = bilcm_res, LSM_Object = LSM_res, legend_position = "none")
 ```
 <p align="center">
-  <img width="500" height="500" src="https://github.com/insongkim/repo-data/blob/master/polnet/bilcm_LSLM2.png?raw=true">
+  <img width="500" height="500" src="https://github.com/insongkim/repo-data/blob/master/polnet/bilcm_LSNM2.png?raw=true">
 </p>
