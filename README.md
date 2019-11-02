@@ -132,5 +132,5 @@ bilcm_res <- biLCM(edges = sim.data$A, group1.id = NULL, group2.id = NULL, count
 plot.biLCM.position(biLCM_Object = bilcm_res, LSM_Object = LSM_res, legend_position = "none")
 ```
 <p align="center">
-  <img width="500" height="500" src="https://github.com/insongkim/repo-data/blob/master/polnet/bilcm_LSM2.png?raw=true">
+  <img width="500" height="500" src="https://github.com/insongkim/repo-data/blob/master/polnet/bilcm_LSLM2.png?raw=true">
 </p>
