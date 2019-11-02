@@ -16,10 +16,10 @@
 #'@return A list of the latent group1 space, the latent group2 space, and then the randomly generated poisson count matrix A.
 
 #'@import MASS
-#'@export random_LSNM_data
+#'@export random_LSM_data
 
 
-random_LSNM_data <- function(D,
+random_LSM_data <- function(D,
                              group1,
                              group2,
                              group1_space = NULL,
@@ -110,8 +110,8 @@ l2_norm.sq <- function(vec1, vec2){
 #'@import MASS
 #'@export
 
-# Generate clustered LSNM data
-random_LSNM_data_cluster <- function(n.cluster=4,
+# Generate clustered LSM data
+random_LSM_data_cluster <- function(n.cluster=4,
                                      group1.center=rbind(c(-1,-1), c(-1, 1), c(1, 1), c(1, -1))*5,
                                      group2.center=rbind(c(-1,-1), c(-1, 1), c(1, 1), c(1, -1))*5,
                                      D=2,
@@ -203,12 +203,12 @@ random_LSNM_data_cluster <- function(n.cluster=4,
   
   
   # Call existing function
-  LSNM_data <- random_LSNM_data(D=D, group1=group1, group2 = group2, group1_space = group1.cor[,-(D+1)],
+  LSM_data <- random_LSM_data(D=D, group1=group1, group2 = group2, group1_space = group1.cor[,-(D+1)],
                                 group2_space = group2.cor[,-(D+1)], alpha_popularity = group1.popularity,
                                 Beta_popularity = group2.popularity, link_function = link_function, n = n)
   
   # return
-  ret.list <- list(LSNM_data=LSNM_data, group1.popularity=group1.popularity, group2.popularity=group2.popularity, group1.cor=group1.cor,
+  ret.list <- list(LSM_data=LSM_data, group1.popularity=group1.popularity, group2.popularity=group2.popularity, group1.cor=group1.cor,
                    group2.cor=group2.cor, D=D, group1.center=group1.center,
                    group2.center=group2.center, group1=group1,
                    group2=group2, Sigma=Sigma, tau=tau, v=v, sigma_sq_L = sigma_sq_L,
@@ -217,7 +217,7 @@ random_LSNM_data_cluster <- function(n.cluster=4,
                    group2.cluster = rep(1:n.cluster, group2.division))
 }
 
-#'@param LSNM_Object A trained object of class LSNM
+#'@param LSM_Object A trained object of class LSM
 #'@param group1_space A matrix representing the true latent group1 space. This matrix should have rows equal to the number of group1, and columns equal to the dimensionality of the latent space, D.
 #'@param group2_space A matrix representing the true latent group2 space. This matrix should have rows equal to the number of group2, and columns equal to the dimensionality of the latent space, D.
 #'@return Does not return an object. Prints the proportion of latent space estimates that fell within the credible interval as well as the average error from the true latent space estimates.
@@ -226,43 +226,43 @@ random_LSNM_data_cluster <- function(n.cluster=4,
 #'@export
 
 
-compare.LSNM <- function(LSNM_Object,
+compare.LSM <- function(LSM_Object,
                          group1_space,
                          group2_space){
-  if(class(LSNM_Object)!="LSNM") stop("'LSNM_Object' is not of class 'LSNM'.\n")
+  if(class(LSM_Object)!="LSM") stop("'LSM_Object' is not of class 'LSM'.\n")
   
-  lsnmobj <- summary.LSNM(LSNM_Object)
-  l_ordered <- lsnmobj[order(rownames(lsnmobj)), ]
+  LSMobj <- summary.LSM(LSM_Object)
+  l_ordered <- LSMobj[order(rownames(LSMobj)), ]
   tru_pars <- c(as.vector(t(group1_space)), as.vector(t(group2_space)))
   perc_in_cred <- sum(tru_pars < l_ordered$`90%` & tru_pars > l_ordered$`10%`) / length(tru_pars)
   ave_marg_error <- mean(abs(l_ordered$Mean - tru_pars))
   paste0('A proportion of ', perc_in_cred, 'of latent space parameters fell within their credible interval for an average error of ', ave_marg_error)
 }
 
-#'@param LSNM_Object A trained object of class LSNM
+#'@param LSM_Object A trained object of class LSM
 #'@param group1_space A matrix representing the true latent group1 space. This matrix should have rows equal to the number of group1, and columns equal to the dimensionality of the latent space, D.
 #'@param group2_space A matrix representing the true latent group2 space. This matrix should have rows equal to the number of group2, and columns equal to the dimensionality of the latent space, D.
 #'@param group1_popularity The group1 popularity factors used to account for baseline likelihood to lobby. Expecting a group1 length vector. Assumed to be drawn from a normal distribution. An optional argument, but must specify this or v and sigma_sq_L
 #'@param group2_popularity The group2 popularity factors used to account for baseline likelihood to sponsor bills. Expecting a group2 length vector. Assumed to be drawn from a normal distribution with mean 0. An optional argument, but must specify this or sigma_sq_P
 #'@param group1_cluster A vector representing the true cluster of group1
 #'@param group2_cluster A vector representing the true cluster of group2
-#'@return Two plots: true latent space and estimated LSNM positions
+#'@return Two plots: true latent space and estimated LSM positions
 
 #'@export
 
 
-plot.compare.LSNM <- function(LSNM_Object,
+plot.compare.LSM <- function(LSM_Object,
                               group1_space,
                               group2_space,
                               group1_popularity,
                               group2_popularity,
                               group1_cluster = NULL,
                               group2_cluster = NULL,
-                              main = "Estimated LSNM Positions",
+                              main = "Estimated LSM Positions",
                               legend = c("Group1", "Group2"),
                               legend_position = "topleft",
                               ...){
-  if(class(LSNM_Object)!="LSNM") stop("'LSNM_Object' is not of class 'LSNM'.\n")
+  if(class(LSM_Object)!="LSM") stop("'LSM_Object' is not of class 'LSM'.\n")
   
   D <- ifelse(is.null(ncol(group1_space)),1,2) # number of dimensions
   m <- length(group1_space)/D
@@ -278,7 +278,7 @@ plot.compare.LSNM <- function(LSNM_Object,
   cols <- gg_color_hue(k)
   
   if (D==1) {
-    df_fit <- as.data.frame(LSNM_Object$stan_fitted_model)
+    df_fit <- as.data.frame(LSM_Object$stan_fitted_model)
     nms <- df_fit[ , grepl( "^col_embedding|^row_embedding|^col_factor|^row_factor" , names(df_fit) )]
     plot.data <- colMeans(nms) # posterior mean
 
@@ -326,7 +326,7 @@ plot.compare.LSNM <- function(LSNM_Object,
            cex = col_size,
            col = cols[as.factor(group2_col)])
 
-    plot.LSNM(LSNM_Object, group1_cluster, group2_cluster, main, legend, legend_position, ...)
+    plot.LSM(LSM_Object, group1_cluster, group2_cluster, main, legend, legend_position, ...)
     
     par(mfrow=c(1,1))
   }

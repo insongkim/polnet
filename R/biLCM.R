@@ -155,7 +155,7 @@ plot.biLCM <- function(biLCM_Object,
 #'@param biLCM_Object A trained object of class biLCM
 #'@param group1_space A matrix representing the latent group1 space. This matrix should have rows equal to the number of group1, and columns equal to the dimensionality of the latent space, either 1 or 2.
 #'@param group2_space A matrix representing the latent group2 space. This matrix should have rows equal to the number of group2, and columns equal to the dimensionality of the latent space, either 1 or 2.
-#'@param LSNM_Object A trained object of class LSNM. An optional argument, required if \code{group1_latent_position} and \code{group2_latent_position} are missing
+#'@param LSM_Object A trained object of class LSM. An optional argument, required if \code{group1_latent_position} and \code{group2_latent_position} are missing
 #'@param main
 #'@param legend_position
 #'@param radius
@@ -167,7 +167,7 @@ plot.biLCM <- function(biLCM_Object,
 plot.biLCM.position <- function(biLCM_Object,
                                 group1_latent_position = NULL,
                                 group2_latent_position = NULL,
-                                LSNM_Object = NULL,
+                                LSM_Object = NULL,
                                 main = "biLCM Community Distribution",
                                 legend_position = "topleft",
                                 radius = 0.1){
@@ -176,9 +176,9 @@ plot.biLCM.position <- function(biLCM_Object,
   m <- dim(biLCM_Object$alpha)[1] # number of group1
   n <- dim(biLCM_Object$beta)[1] # number of group2
   
-  if((is.null(group1_latent_position)|is.null(group2_latent_position))&is.null(LSNM_Object)) stop("Either group1_latent_position/group2_latent_position or LSNM_Object should be provided.\n")
+  if((is.null(group1_latent_position)|is.null(group2_latent_position))&is.null(LSM_Object)) stop("Either group1_latent_position/group2_latent_position or LSM_Object should be provided.\n")
   
-  if(is.null(LSNM_Object)) {
+  if(is.null(LSM_Object)) {
     if(dim(group1_latent_position)[1]!=m) stop("Invalid number of rows in 'group1_latent_position'.\n")
     if(dim(group2_latent_position)[1]!=n) stop("Invalid number of rows in 'group2_latent_position'.\n")
     
@@ -222,12 +222,12 @@ plot.biLCM.position <- function(biLCM_Object,
     }
     
   } else {
-    if(LSNM_Object$stan_fitted_model@par_dims$row_factor_adj!=m) stop("Invalid number of group1 members in 'LSNM_Object'")
-    if(LSNM_Object$stan_fitted_model@par_dims$col_factor_adj!=n) stop("Invalid number of group2 members in 'LSNM_Object'")
+    if(LSM_Object$stan_fitted_model@par_dims$row_factor_adj!=m) stop("Invalid number of group1 members in 'LSM_Object'")
+    if(LSM_Object$stan_fitted_model@par_dims$col_factor_adj!=n) stop("Invalid number of group2 members in 'LSM_Object'")
     
-    D <- LSNM_Object$stan_fitted_model@par_dims$cov_embedding_diag # number of dimensions
+    D <- LSM_Object$stan_fitted_model@par_dims$cov_embedding_diag # number of dimensions
     
-    df_fit <- as.data.frame(LSNM_Object$stan_fitted_model)
+    df_fit <- as.data.frame(LSM_Object$stan_fitted_model)
     nms <- df_fit[ , grepl( "^col_embedding|^row_embedding|^col_factor|^row_factor" , names(df_fit) )]
     plot.data <- colMeans(nms) # posterior mean
     
@@ -247,7 +247,7 @@ plot.biLCM.position <- function(biLCM_Object,
                                  cols=LETTERS[1:length(biLCM_Object$kappa)], color=NA, alpha = 0.7) + 
         coord_equal() + theme_classic() + theme(legend.position = legend_position, plot.title = element_text(hjust=0.5)) + 
         scale_y_continuous(breaks=dat$y, labels=dat$name) +
-        xlab("LSNM Dimension 1") + ylab(NULL) +
+        xlab("LSM Dimension 1") + ylab(NULL) +
         labs(title = main, fill = "Community")
       
     } else if (D==2) {
@@ -263,7 +263,7 @@ plot.biLCM.position <- function(biLCM_Object,
       ggplot() + geom_scatterpie(aes(x=x, y=y, group=group, r=radius), data=dat,
                                  cols=LETTERS[1:length(biLCM_Object$kappa)], color=NA, alpha = 0.7) + 
         coord_equal() + theme_classic() + theme(legend.position = legend_position, plot.title = element_text(hjust=0.5)) + 
-        xlab("LSNM Dimension 1") + ylab("LSNM Dimension 2") +
+        xlab("LSM Dimension 1") + ylab("LSM Dimension 2") +
         labs(title = main, fill = "Community")
     }
   }

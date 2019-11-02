@@ -5,14 +5,14 @@
 \title{Plot biLCM with latent position}
 \usage{
 plot.biLCM.position(biLCM_Object, group1_latent_position = NULL,
-  group2_latent_position = NULL, LSNM_Object = NULL,
+  group2_latent_position = NULL, LSM_Object = NULL,
   main = "biLCM Community Distribution", legend_position = "topleft",
   radius = 0.1)
 }
 \arguments{
 \item{biLCM_Object}{A trained object of class biLCM}
 
-\item{LSNM_Object}{A trained object of class LSNM. An optional argument, required if \code{group1_latent_position} and \code{group2_latent_position} are missing}
+\item{LSM_Object}{A trained object of class LSM. An optional argument, required if \code{group1_latent_position} and \code{group2_latent_position} are missing}
 
 \item{group1_space}{A matrix representing the latent group1 space. This matrix should have rows equal to the number of group1, and columns equal to the dimensionality of the latent space, either 1 or 2.}
 

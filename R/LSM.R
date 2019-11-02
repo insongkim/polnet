@@ -1,4 +1,4 @@
-#' @name LSNM
+#' @name LSM
 #' @param edges Matrix or data.frame or igraph of connection strengths as counts (NA is considered as no edges)
 #' @param D The dimensionality of the latent space, 2 dimensions is recommended
 #' @param method One of \code{vi} (variational inference) or
@@ -25,15 +25,15 @@
 #' @import igraph
 #' @import tidyr
 #' @useDynLib polnet, .registration = TRUE
-#' @export LSNM
+#' @export LSM
 #' @examples \dontrun{
 #' set.seed(11)
-#' sim.data <- random_LSNM_data_cluster(n.cluster=4, group1.center=rbind(c(-0.5,-1), c(-1, 0.3), c(0.4, 1), c(0.2, -0.2))*5, group2.center=rbind(c(-0.5,-1), c(-1, 0.3), c(0.4, 1), c(0.2, -0.2))*5, v=3, sigma_sq_L = 0.5, sigma_sq_P = 0.7, tau=c(0.5, 0.8))
-#' res <- LSNM(sim.data$LSNM_data$A, D=2, method = "vi", iter=50000)
-#' plot.compare.LSNM(res, sim.data$LSNM_data$Theta, sim.data$LSNM_data$Psi, sim.data$group1.popularity, sim.data$group2.popularity, sim.data$group1.cluster, sim.data$group2.cluster, legend_position = "center")
+#' sim.data <- random_LSM_data_cluster(n.cluster=4, group1.center=rbind(c(-0.5,-1), c(-1, 0.3), c(0.4, 1), c(0.2, -0.2))*5, group2.center=rbind(c(-0.5,-1), c(-1, 0.3), c(0.4, 1), c(0.2, -0.2))*5, v=3, sigma_sq_L = 0.5, sigma_sq_P = 0.7, tau=c(0.5, 0.8))
+#' res <- LSM(sim.data$LSM_data$A, D=2, method = "vi", iter=50000)
+#' plot.compare.LSM(res, sim.data$LSM_data$Theta, sim.data$LSM_data$Psi, sim.data$group1.popularity, sim.data$group2.popularity, sim.data$group1.cluster, sim.data$group2.cluster, legend_position = "center")
 #' }
 #'
-LSNM <- function(edges,
+LSM <- function(edges,
                  D = 2,
                  link_function = "poisson",
                  n = NULL,
@@ -68,8 +68,8 @@ LSNM <- function(edges,
   }
   if (!method %in% c("vi","mcmc","vi-mcmc"))
     stop("'method' should be either 'vi' or 'mcmc' or 'vi-mcmc")
-  if (!is.null(fixed.actor.object) & class(fixed.actor.object)!="LSNM_fixed_actors")
-    stop("fixed.actor.object must be of class LSNM_fixed_actors.")
+  if (!is.null(fixed.actor.object) & class(fixed.actor.object)!="LSM_fixed_actors")
+    stop("fixed.actor.object must be of class LSM_fixed_actors.")
   if (D!=dim(fixed_row_embedding)[2]) 
     stop("Invalid number of columns in 'fixed_row_embedding'")
   if (D!=dim(fixed_col_embedding)[1]) 
@@ -85,7 +85,7 @@ LSNM <- function(edges,
                                fixed_row_embedding=fixed_row_embedding,
                                fixed_col_index=fixed_col_index,
                                fixed_col_embedding=fixed_col_embedding)
-    class(fixed.actor.object) <- "LSNM_fixed_actors"
+    class(fixed.actor.object) <- "LSM_fixed_actors"
   }
   
 
@@ -117,14 +117,14 @@ LSNM <- function(edges,
                        N_fixed_row=fixed.actor.object$N_fixed_row, N_fixed_col=fixed.actor.object$N_fixed_col, fixed_row_index=fixed.actor.object$fixed_row_index,
                        fixed_row_embedding=fixed.actor.object$fixed_row_embedding, fixed_col_index=fixed.actor.object$fixed_col_index,
                        fixed_col_embedding=fixed.actor.object$fixed_col_embedding)
-      sample_post <- rstan::vb(stanmodels$LSNM, data = stanlist, ...)
+      sample_post <- rstan::vb(stanmodels$LSM, data = stanlist, ...)
     } else if (method == "mcmc"){
       # Parameters necessary to run stan function
       stanlist <- list(edges = edge_mat, D = D, N_row = nrow(edge_mat), N_col = ncol(edge_mat),
                        N_fixed_row=fixed.actor.object$N_fixed_row, N_fixed_col=fixed.actor.object$N_fixed_col, fixed_row_index=fixed.actor.object$fixed_row_index,
                        fixed_row_embedding=fixed.actor.object$fixed_row_embedding, fixed_col_index=fixed.actor.object$fixed_col_index,
                        fixed_col_embedding=fixed.actor.object$fixed_col_embedding)
-      sample_post <- rstan::sampling(stanmodels$LSNM, data = stanlist, ...)
+      sample_post <- rstan::sampling(stanmodels$LSM, data = stanlist, ...)
     }
     }  else {
     if (method == "vi") {
@@ -133,30 +133,30 @@ LSNM <- function(edges,
                        N_fixed_row=fixed.actor.object$N_fixed_row, N_fixed_col=fixed.actor.object$N_fixed_col, fixed_row_index=fixed.actor.object$fixed_row_index,
                        fixed_row_embedding=fixed.actor.object$fixed_row_embedding, fixed_col_index=fixed.actor.object$fixed_col_index,
                        fixed_col_embedding=fixed.actor.object$fixed_col_embedding)
-      sample_post <- rstan::vb(stanmodels$LSNMbinom, data = stanlist, ...)
+      sample_post <- rstan::vb(stanmodels$LSMbinom, data = stanlist, ...)
     } else if (method == "mcmc") {
       # Parameters necessary to run stan function
       stanlist <- list(edges = edge_mat, D = D, n = n, N_row = nrow(edge_mat), N_col = ncol(edge_mat),
                        N_fixed_row=fixed.actor.object$N_fixed_row, N_fixed_col=fixed.actor.object$N_fixed_col, fixed_row_index=fixed.actor.object$fixed_row_index,
                        fixed_row_embedding=fixed.actor.object$fixed_row_embedding, fixed_col_index=fixed.actor.object$fixed_col_index,
                        fixed_col_embedding=fixed.actor.object$fixed_col_embedding)
-      sample_post <- rstan::sampling(stanmodels$LSNMbinom, data = stanlist, ...)
+      sample_post <- rstan::sampling(stanmodels$LSMbinom, data = stanlist, ...)
     } 
   }  
   
 
   out <- list(stan_fitted_model = sample_post)
 
-  class(out) <- 'LSNM'
+  class(out) <- 'LSM'
   return(out)
 }
 #' Choose the actors whose coordinates will be fixed
 #'
 #' \code{choose.fixed()} takes an object returned by
-#' \code{LSNM}, and returns a list containing the parameters
+#' \code{LSM}, and returns a list containing the parameters
 #' of actors whose coordinates are fixed.
 #'
-#' @param LSNM_Object A trained object of class LSNM
+#' @param LSM_Object A trained object of class LSM
 #' @param n.wild The number of actors to be fixed in each octants
 #' @param method The method to choose the wildest actors
 #' @return a list containing the parameters of actors whose coordinates are fixed.
@@ -166,11 +166,11 @@ LSNM <- function(edges,
 #' @export choose.fix
 #' 
 #' 
-choose.fix <- function(LSNM_Object, 
+choose.fix <- function(LSM_Object,
                        n.wild=1, 
                        choose.method="axis"){
     
-  df_fit <- as.data.frame(LSNM_Object$stan_fitted_model)
+  df_fit <- as.data.frame(LSM_Object$stan_fitted_model)
   df_fit.mean <- colMeans(df_fit)
   
   D <- max(as.numeric(gsub("^cov_embedding_diag\\[(\\d+)\\]$", "\\1", colnames(df_fit)[grep("^cov_embedding_diag\\[(\\d+)\\]$", colnames(df_fit))])))
@@ -365,7 +365,7 @@ choose.fix <- function(LSNM_Object,
   res <- list(N_fixed_row=N_fixed_row, fixed_row_index=fixed_row_index, fixed_row_embedding=fixed_row_embedding,
               N_fixed_col=N_fixed_col, fixed_col_index=fixed_col_index, fixed_col_embedding=fixed_col_embedding)
   
-  class(res) <- "LSNM_fixed_actors"
+  class(res) <- "LSM_fixed_actors"
   
   return(res)
 }
@@ -402,27 +402,27 @@ min_dist_to_octant_line <- function(v){
 
 
 
-#' Get summaries of a LSNM object
+#' Get summaries of a LSM object
 #'
-#' \code{summary.LSNM()} takes an object returned by
-#' \code{LSNM}, and returns a matrix of the mean,
+#' \code{summary.LSM()} takes an object returned by
+#' \code{LSM}, and returns a matrix of the mean,
 #' standard deviation, and credible interval of the latent space with all chains being merged
 #'
-#' @param LSNM_Object A trained object of class LSNM
+#' @param LSM_Object A trained object of class LSM
 #' @param low_perc The bottom range of the desired credible interval, defaults to 0.1
 #' @param high_perc The top range of the credible interval, defaults to 0.9
-#' @return A matrix that includes the mean, standard deviation, and credible interval of the latent space estimated by the LSNM algorithm. The row embeddings are the client latent space positions, while the column embeddings are the legislator latent space positions.
+#' @return A matrix that includes the mean, standard deviation, and credible interval of the latent space estimated by the LSM algorithm. The row embeddings are the client latent space positions, while the column embeddings are the legislator latent space positions.
 #'
 
 #' @useDynLib polnet, .registration = TRUE
 #' @export
 
-summary.LSNM <- function(LSNM_Object,
+summary.LSM <- function(LSM_Object,
                          low_perc = 0.1,
                          high_perc = 0.9){
-  if(class(LSNM_Object)!="LSNM") stop("'LSNM_Object' is not of class 'LSNM'.\n")
+  if(class(LSM_Object)!="LSM") stop("'LSM_Object' is not of class 'LSM'.\n")
 
-  df_fit <- as.data.frame(LSNM_Object$stan_fitted_model)
+  df_fit <- as.data.frame(LSM_Object$stan_fitted_model)
   nms <- df_fit[ , grepl( "^col_embedding|^row_embedding" , names(df_fit) )]
   final_df <- as.data.frame(cbind(colMeans(nms), apply(nms, 2, sd), apply(nms, 2, quantile, low_perc), apply(nms, 2, quantile, high_perc)))
   names(final_df) <- c('Mean', 'SD', '10%', '90%')
@@ -431,30 +431,30 @@ summary.LSNM <- function(LSNM_Object,
 }
 
 
-#' Plot the posterior means of a LSNM object
+#' Plot the posterior means of a LSM object
 #'
-#' \code{plot.LSNM()} takes an object returned by
-#' \code{LSNM}, and returns a plot of the posterior means.
+#' \code{plot.LSM()} takes an object returned by
+#' \code{LSM}, and returns a plot of the posterior means.
 #' Use standard arguments to the \code{plot} function to modify the plot as needed.
 #'
-#' @param LSNM_Object A trained object of class LSNM
+#' @param LSM_Object A trained object of class LSM
 #' @param group1_cluster A vector representing the cluster of group1
 #' @param group2_cluster A vector representing the cluster of group2
 #' @return a plot of the posterior means
 #' @export
 
-plot.LSNM <- function(LSNM_Object,
+plot.LSM <- function(LSM_Object,
                       group1_cluster = NULL,
                       group2_cluster = NULL,
-                      main = "Estimated LSNM Positions",
+                      main = "Estimated LSM Positions",
                       legend = c("Group1", "Group2"),
                       legend_position = "topleft",
                       ...){
-  if(class(LSNM_Object)!="LSNM") stop("'LSNM_Object' is not of class 'LSNM'.\n")
+  if(class(LSM_Object)!="LSM") stop("'LSM_Object' is not of class 'LSM'.\n")
   
-  m <- LSNM_Object$stan_fitted_model@par_dims$row_factor_adj # number of group1
-  n <- LSNM_Object$stan_fitted_model@par_dims$col_factor_adj # number of group2
-  D <- LSNM_Object$stan_fitted_model@par_dims$cov_embedding_diag # number of dimensions
+  m <- LSM_Object$stan_fitted_model@par_dims$row_factor_adj # number of group1
+  n <- LSM_Object$stan_fitted_model@par_dims$col_factor_adj # number of group2
+  D <- LSM_Object$stan_fitted_model@par_dims$cov_embedding_diag # number of dimensions
 
   if (is.null(group1_cluster)) group1_cluster <- rep("black", m)
   if (is.null(group2_cluster)) group2_cluster <- rep("black", n)
@@ -462,7 +462,7 @@ plot.LSNM <- function(LSNM_Object,
   k <- length(unique(c(group1_cluster, group2_cluster)))
   cols <- gg_color_hue(k)
 
-  df_fit <- as.data.frame(LSNM_Object$stan_fitted_model)
+  df_fit <- as.data.frame(LSM_Object$stan_fitted_model)
   nms <- df_fit[ , grepl( "^col_embedding|^row_embedding|^col_factor|^row_factor" , names(df_fit) )]
   plot.data <- colMeans(nms) # posterior mean
 
