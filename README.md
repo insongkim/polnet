@@ -27,6 +27,9 @@ library(devtools)
 install_github("insongkim/polnet", dependencies = TRUE, ref = "master")
 ```
 
+### Note on 64-bit Windows Compatibility
+This package depends on `RStan` and further on `RCpp` and `C++` compilers. Please make sure in your system environment the path to a 64-bit `C++` compiler has been correctly specified and prioritized.
+
 ## Examples
 ### biLCM
 
