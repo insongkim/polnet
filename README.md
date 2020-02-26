@@ -31,7 +31,7 @@ install_github("insongkim/polnet", dependencies = TRUE, ref = "master")
 This package depends on `RStan` and further on `RCpp` and `C++` compilers. Please make sure in your system environment the path to a 64-bit `C++` compiler has been correctly specified and prioritized.
 
 Further, if your R console is not up to the latest version, run the following code before installing the package from github to suppress the warning message indicating packages are built on an R console later than your version.
-```r
+``` r
 Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS="true")
 ```
 
