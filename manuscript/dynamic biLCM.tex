@@ -1,0 +1,239 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb, bm}
+
+\DeclareMathOperator{\Tr}{Tr}
+
+\title{Dynamic biLCM}
+\author{Sooahn Shin}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The Setup}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%
+\subsection*{Notation}
+%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item $z \in \{1, \ldots, k\}$: A community.
+	\item $i \in \{1, \ldots, m\}$: A member state.
+	\item $j \in \{1, \ldots, n_{t}\}$: A bill.
+	\item $\underline{T_i}, \overline{T_i}$: The first and last time period member state $i$ enters the data respectively.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%
+\subsection*{Parameters}
+%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item $\kappa_{zt}$: The overall level of activity in community $z$ at time $t$.
+	\item $\bm\alpha_{it}$: Processed with soft-max function, member state $i$'s involvement in communities at time $t$. A vector of length $k$.
+	\item $\bm\beta_{jt}$ Bill $j$'s involvement in communities at time $t$. A vector of length $k$. $\sum_j \beta_{jtz} = 1$ for each fixed $t$ and $z$.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%
+\subsection*{Model}
+%%%%%%%%%%%%%%%%%%%%
+
+\begin{align}
+	\bm\alpha_{it} | \bm\alpha_{i,t-1} &\sim \mathcal{N}(\bm\alpha_{i,t-1}, \sigma^2I) \text{ for } t = \underline{T_i}, \underline{T_i}+1, \ldots, \overline{T_i}-1, \overline{T_i} \\
+	A_{ijt} | \bm\kappa_t, \bm\alpha_{it}, \bm\beta_{jt} &\sim \text{Poisson}(\sum_{z=1}^k \kappa_{zt}\pi(\alpha_{itz})\beta_{jtz}) \text{ where } \pi(\alpha_{itz}) = \frac{\exp(\alpha_{itz})}{\sum_i \exp(\alpha_{itz})} 
+\end{align}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Estimation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%
+\subsection*{The log-likelihood}
+%%%%%%%%%%%%%%%%%%%%
+
+\begin{align}
+	\log p(&\bm A | \bm\alpha,  \bm\beta, \bm\kappa)\\
+	&= \sum_{i=1}^m\sum_{t=\underline{T_i}}^{\overline{T_i}}\sum_{j=1}^{n_t} A_{ijt}\log\left( \sum_{z=1}^k \kappa_{zt} \pi(\alpha_{itz}) \beta_{jtz} \right) 
+	- \sum_{i=1}^m\sum_{t=\underline{T_i}}^{\overline{T_i}}\sum_{j=1}^{n_t}\sum_{z=1}^k \kappa_{zt} \pi(\alpha_{itz}) \beta_{jtz}
+\intertext{Note that the constant terms are discarded. We approximate $\log p(\bm A | \bm\alpha,  \bm\beta, \bm\kappa)$ with a variational parameter $q_{ijt}(z)$ under the factorization assumption $p(\{q_{ijt}(z)\}_{z=1}^k = \prod_{z=1}^k q_{ijt}(z)$.}
+	\mathcal{L} &(\bm A; \bm\alpha,  \bm\beta, \bm\kappa) \\
+	&\stackrel{\text{df}}{=} \sum_{i=1}^m\sum_{t=\underline{T_i}}^{\overline{T_i}}\sum_{j=1}^{n_t}\sum_{z=1}^k \left( A_{ijt} q_{ijt} (z) \log \left( \frac{\kappa_{zt} \pi(\alpha_{itz}) \beta_{jtz}}{q_{ijt} (z)} \right) - \kappa_{zt} \pi(\alpha_{itz}) \beta_{jtz} \right) \\
+	&\leq \log p(\bm A | \bm\alpha,  \bm\beta, \bm\kappa)
+\end{align}
+
+%%%%%%%%%%%%%%%%%%%%
+\subsection*{Step 1: Update $q_{ijt}$ for $\forall i, j, t$}
+%%%%%%%%%%%%%%%%%%%%
+Maximizing $\mathcal{L}$ with respect to $q_{ijt}$ with all other parameters fixed using differentiation yields:
+\begin{align}
+	q_{ijt}(z) &= \frac{\kappa_{zt} \pi(\alpha_{itz}) \beta_{jtz}}{\sum_{z=1}^k \kappa_{zt} \pi(\alpha_{itz}) \beta_{jtz}}
+\end{align}
+
+%%%%%%%%%%%%%%%%%%%%
+\subsection*{Step 2: Update $\kappa_{zt}$ for $\forall z, t$}
+Maximizing $\mathcal{L}$ with respect to $\kappa_{zt}$ with all other parameters fixed yields:
+\begin{align}
+	\kappa_{zt} &= \frac{\sum_{i \in \mathcal{I}_t} \sum_{j=1}^{n_t} A_{ijt} q_{ijt}(z) }
+	{\sum_{i \in \mathcal{I}_t} \sum_{j=1}^{n_t} \pi(\alpha_{itz}) \beta_{jtz} }
+\end{align}
+where $\mathcal{I}_t = \{i: \underline{T_i} \leq t \leq \overline{T_i}\}$.
+
+%%%%%%%%%%%%%%%%%%%%
+\subsection*{Step 3: Update $\beta_{jtz}$ with a constraint $\sum_{j=1}^{n_t} \beta_{jtz}=1$ for $\forall j, t, z$}
+%%%%%%%%%%%%%%%%%%%%
+Let $\lambda_{tz}$ denote a Lagrange multipler. Maximizing $\mathcal{L} + \lambda_{tz}(1-\sum_{j=1}^{n_t} \beta_{jtz})$ with respect to $\beta_{jtz}$ given all other parameters yields:
+
+\begin{align}
+	\beta_{jtz} &= \frac{\sum_{i \in \mathcal{I}_t}  A_{ijt} q_{ijt}(z) }
+	{\lambda_{tz} + \sum_{i \in \mathcal{I}_t} \kappa_{zt} \pi(\alpha_{itz}) } \\
+	&= \frac{\sum_{i \in \mathcal{I}_t}  A_{ijt} q_{ijt}(z) }
+	{\sum_{i \in \mathcal{I}_t} \sum_{j=1}^{n_t} A_{ijt} q_{ijt}(z) }
+\end{align}
+
+%%%%%%%%%%%%%%%%%%%%
+\subsection*{Step 4: Update $\bm{\alpha_{i, \underline{T_i}:\overline{T_i}}}$ using the Kalman filter for $\forall i$}
+%%%%%%%%%%%%%%%%%%%%
+
+Recall that our state-space model is as follows:
+\begin{align}
+	\bm\alpha_{it} | \bm\alpha_{i,t-1} &\sim \mathcal{N}(\bm\alpha_{i,t-1}, \sigma^2I) \\
+	A_{ijt} | \bm\kappa_z, \bm\alpha_{it}, \bm\beta_{jt} &\sim \text{Poisson}(\sum_{z=1}^k \kappa_{zt}\pi(\alpha_{itz})\beta_{jtz}) 
+\end{align}
+By introducing variational parameters $\bm{\hat\alpha_{it}}$ and $\hat\nu_{it}$, we form a variational state-space model.
+\begin{align}
+	\bm{\hat\alpha}_{it} | \bm\alpha_{it} &\sim \mathcal{N}(\bm\alpha_{it}, \hat\nu_{it}^2I) 
+\end{align}
+Note that the forward and backward recursion can be driven as below using the standard Kalman filter.
+\subsubsection*{Forward}
+The forward mean and variance of the variational posterior are given by:
+\begin{align}
+	\bm\alpha_{it} &| \bm{\hat\alpha}_{i,\underline{T_i}:t} \sim \mathcal{N} (\bm m_{it}, \bm V_{it})
+	\intertext{where}
+	\bm m_{it} &= \left[ I-\left(\bm V_{i, t-1} + \sigma^2I\right) \left(\bm V_{i, t-1} + \sigma^2I+\hat\nu_{it}^2I\right)^{-1} \right] \bm m_{i,t-1} \\
+	&\quad+ \left(\bm V_{i, t-1} + \sigma^2I\right) \left(\bm V_{i, t-1} + \sigma^2I+\hat\nu_{it}^2I\right)^{-1} \bm{\hat\alpha}_{it} \\
+	\bm V_{it} &= \left[ I-\left(\bm V_{i, t-1} + \sigma^2I\right) \left(\bm V_{i, t-1} + \sigma^2I+\hat\nu_{it}^2I\right)^{-1} \right]\left(\bm V_{i,t-1} + \sigma^2I \right)
+\end{align}
+\noindent with initial conditions specified by fixed $\bm m _{i0}$ and $\bm V_{i0}$.
+\subsubsection*{Backward}
+By applying backward recursion we obtain:
+\begin{align}
+	\bm\alpha_{it} &| \bm{\hat\alpha}_{i,\underline{T_i}:\overline{T_i}} \sim \mathcal{N} (\widetilde{\bm m}_{it}, \widetilde{\bm V}_{it})
+	\intertext{where}
+	\widetilde{\bm m}_{it} &= \left[I - \bm V_{it}\left( \bm V_{it} + \sigma^2 I \right)^{-1} \right]\bm m_{it} + \bm V_{it}\left( \bm V_{it} + \sigma^2 I \right)^{-1} \widetilde{\bm m}_{i,t+1} \\
+	\widetilde{\bm V}_{it} &= \bm V_{it} + \bm V_{it}\left( \bm V_{it} + \sigma^2 I \right)^{-1} \left(\widetilde{\bm V}_{i,t+1} -\bm V_{it}-\sigma^2 I\right) \left( \bm V_{it}^\top + \sigma^2 I \right)^{-1} \bm V_{it}^\top
+\end{align}
+\noindent with initial conditions $\widetilde{\bm m}_{i\overline{T_i}} = \bm m_{i\overline{T_i}}$ and $\widetilde{\bm V}_{i\overline{T_i}} = \bm V_{i\overline{T_i}}$.
+
+\subsubsection*{Derivation of Lower Bound}
+We approximate $\mathcal{L}_{\bm\alpha}$ using the aforementioned variational state space posterior $f(\bm{\alpha}_{i, \underline{T_i}:\overline{T_i}}|\bm{\hat\alpha}_{i, \underline{T_i}:\overline{T_i}})$. For simplicity of the notation, let $p(A_{\underline{T_i}:\overline{T_i}})$ denote the target distribution $p(\{\{A_{ijt}\}_{j=1}^{m_t}\}_{t=\underline{T_i}}^{\overline{T_i}}|\bm{\beta},\bm{\kappa},\bm{q})$ and $\bm{\alpha}_i$ denote $\bm{\alpha}_{i, \underline{T_i}:\overline{T_i}}$. From Jensen's inequality, observe that
+\begin{align}
+	\log p(A_{\underline{T_i}:\overline{T_i}}) \geq & \int f(\bm{\alpha}_i|\bm{\hat\alpha}_i) \log \left( \frac{p(\bm{\alpha}_i)p(A_{\underline{T_i}:\overline{T_i}}|\bm{\alpha}_i)}{f(\bm{\alpha}_i|\bm{\hat\alpha}_i)} \right) d \bm{\alpha}_i \\
+	&= \label{eq:0} \underbrace{\mathbb{E}_{f} \log p(\bm{\alpha}_i)}_{\text{See eq.} (\ref{eq:1})} + \underbrace{\sum_{t=\underline{T_i}}^{\overline{T_i}}\mathbb{E}_{f}\log p(A_t|\bm{\alpha}_{it})}_{\text{See eq.} (\ref{eq:2})} + \underbrace{H(\bm{\alpha}_i|\bm{\hat\alpha}_i)}_{\text{See eq.} (\ref{eq:3})}
+\end{align}
+
+The first term of the right hand side of equation (\ref{eq:0}) is:
+\begin{align}
+	\label{eq:1} \mathbb{E}_{f} \log p(\bm{\alpha}_i) &= \sum_{t=\underline{T_i}}^{\overline{T_i}} \mathbb{E}_{f} \log {p(\bm{\alpha}_{it}|\bm{\alpha}_{i,t-1})} + \underbrace{\mathbb{E}_{f} \log {p(\bm{\alpha}_{i,\underline{T_i}-1})}}_{\text{const.}} \\
+	&= -\frac{kT_i}{2} \log 2\pi\sigma^2 - \frac{1}{2\sigma^2}\sum_{t=\underline{T_i}}^{\overline{T_i}} \mathbb{E}_{f} (\bm{\alpha}_{it}-\bm{\alpha}_{i,t-1})^\top(\bm{\alpha}_{it}-\bm{\alpha}_{i,t-1}) + \text{const.} \\
+	&=   -\frac{kT_i}{2} \log 2\pi\sigma^2 - \frac{1}{2\sigma^2}\sum_{t=\underline{T_i}}^{\overline{T_i}} (\widetilde{\bm m}_{it}-\widetilde{\bm m}_{i,t-1})^\top(\widetilde{\bm m}_{it}-\widetilde{\bm m}_{i,t-1}) \\
+	&\quad-\frac{1}{\sigma^2}\sum_{t=\underline{T_i}}^{\overline{T_i}} \Tr(\widetilde{\bm V}_{it}) + \frac{1}{2\sigma^2} \left( \Tr(\widetilde{\bm V}_{i0})  - \Tr(\widetilde{\bm V}_{i\overline{T_i}})\right) + \text{const.}
+\end{align}
+\noindent where $T_i = \overline{T_i}-\underline{T_i}$. Note that the following Gaussian quadratic form identity is used at the last equation.
+\begin{align}
+	\mathbb{E}_{\bm m,\bm V}(\bm x-\bm \mu)^\top \bm\Sigma^{-1} (\bm x-\bm \mu) &= (\bm m-\bm \mu)^\top\bm\Sigma^{-1} (\bm m-\bm \mu) + \Tr(\bm\Sigma^{-1}\bm V)
+\end{align}
+
+The second term of equation (\ref{eq:0}) is:
+\begin{align}
+	\label{eq:2} \sum_{t=\underline{T_i}}^{\overline{T_i}}&\mathbb{E}_{f}\log p(A_t|\bm{\alpha}_{it}) \\
+	&= \sum_{t=\underline{T_i}}^{\overline{T_i}}\sum_{j=1}^{n_t}\sum_{z=1}^k \mathbb{E}_{f} \left[ A_{ijt} q_{ijt} (z) \log \left( \frac{\kappa_{zt} \pi(\alpha_{itz}) \beta_{jtz}}{q_{ijt} (z)} \right) - \kappa_{zt} \pi(\alpha_{itz}) \beta_{jtz} \right] \\
+	&= \sum_{t=\underline{T_i}}^{\overline{T_i}}\sum_{j=1}^{n_t}\sum_{z=1}^k A_{ijt} q_{ijt} (z) \mathbb{E}_{f} \left[\alpha_{itz} - \log\sum_{i=1}^m \exp(\alpha_{itz}) \right] \\
+	&\quad-\sum_{t=\underline{T_i}}^{\overline{T_i}}\sum_{j=1}^{n_t}\sum_{z=1}^k \kappa_{zt} \mathbb{E}_{f} \left[\pi(\alpha_{itz})\right]\beta_{jtz} + \text{const.} 
+	\intertext{We approximate the expectation of the softmax transform of normal variable as $\mathbb{E}_{f} \left[\pi(\alpha_{itz})\right] \approx \frac{1}{2-k + \sum_{z^\prime \neq z} \frac{1}{\mathbb{E}_{f}[\sigma(\alpha_{itz}-\alpha_{itz^\prime})]}}$ where $\sigma(\cdot)$ is a sigmoid function and accordingly $\mathbb{E}_{f}[\sigma(\alpha_{itz}-\alpha_{itz^\prime})] \approx \sigma\left(\frac{\widetilde{m}_{itz}-\widetilde{m}_{itz^\prime}}{1+\pi\left(\widetilde{V}_{itz}+\widetilde{V}_{itz^\prime}\right)/8}\right)$ (see section \ref{Esoft} for more details). Let $E$ denote the approximation for the simplication of notation.}
+	&\approx \sum_{t=\underline{T_i}}^{\overline{T_i}}\sum_{j=1}^{n_t}\sum_{z=1}^k A_{ijt} q_{ijt} (z) \mathbb{E}_{f} \left[\alpha_{itz} - \log\sum_{i=1}^m \exp(\alpha_{itz}) \right] \\
+	&\quad-\sum_{t=\underline{T_i}}^{\overline{T_i}}\sum_{j=1}^{n_t}\sum_{z=1}^k \kappa_{zt} E \beta_{jtz} + \text{const.} 
+	\intertext{We lower bound the first term with a Taylor expansion and introduce additional variational parameters $\hat\zeta_{t,z}, \forall t,z$ as in Blei and Lafferty (2006).}
+	&\geq \sum_{t=\underline{T_i}}^{\overline{T_i}}\sum_{j=1}^{n_t}\sum_{z=1}^k \left\{A_{ijt} q_{ijt} (z) \widetilde{m}_{itz} 
+	- A_{jt} q_{jt} (z) \hat\zeta_{tz}^{-1}\sum_{i=1}^m\exp(\widetilde{m}_{itz}+\widetilde{V}_{itz}/2) \right.\\
+	 &\left.\quad+ A_{jt}q_{jt}(z)\left(1-\log\hat\zeta_{tz}\right)\right\}
+	 -\sum_{t=\underline{T_i}}^{\overline{T_i}}\sum_{j=1}^{n_t}\sum_{z=1}^k \kappa_{zt} E \beta_{jtz} + \text{const.} 
+\end{align}
+where $ A_{jt} q_{jt}(z) = \sum_{i=1}^m A_{ijt} q_{ijt} (z)$.
+
+The third term of equation (\ref{eq:0}) is:
+\begin{align}
+	\label{eq:3} H(\bm{\alpha}_i|\bm{\hat\alpha}_i) &= \sum_{t=\underline{T_i}}^{\overline{T_i}} \left(\frac{1}{2}\log|\widetilde{\bm V}_{it}| + \frac{T}{2}\log2\pi \right)
+\end{align}
+
+Finally, we use a \textbf{conjugate gradient algorithm} to maximize the lower bound with respect to the variational parameters $\hat\zeta_{tz}$ and $\hat\alpha_{itz}$.
+
+\subsubsection*{Maximization of the Lower Bound w.r.t. $\hat\zeta_{tz}$}
+The derivate is as below:
+\begin{align}
+	\frac{\partial l.b.}{\partial \hat\zeta_{tz}} &= A_{jt} q_{jt} \hat\zeta_{tz}^{-2}\sum_{i=1}^m\exp(\widetilde{m}_{itz}+\widetilde{V}_{itz}/2) - A_{jt} q_{jt} \hat\zeta_{tz}^{-1} = 0 \\
+	&\quad\Leftrightarrow \hat\zeta_{tz} = \sum_{i=1}^m\exp(\widetilde{m}_{itz}+\widetilde{V}_{itz}/2)
+\end{align}
+
+
+\subsubsection*{Maximization of the Lower Bound w.r.t. $\hat\alpha_{itz}$}
+The derivate is as below:
+\begin{align}
+	\frac{\partial l.b.}{\partial\hat\alpha_{isz}} &= - \frac{1}{\sigma^2}\sum_{t=\underline{T_i}}^{\overline{T_i}} \left(\widetilde{m}_{itz}-\widetilde{m}_{i,t-1,z}\right)
+	\left( \frac{\partial \widetilde{m}_{itz}}{\partial \hat{\alpha}_{isz}}-\frac{\partial \widetilde{m}_{i,t-1,z}}{\partial \hat{\alpha}_{i,s,z}} \right) \\
+	&\quad - \sum_{t=\underline{T_i}}^{\overline{T_i}}\sum_{j=1}^{n_t} \left( A_{ijt} q_{ijt} (z) 
+	- A_{jt} q_{jt} (z) \hat\zeta_{tz}^{-1}\sum_{i=1}^m\exp(\widetilde{m}_{itz}+\widetilde{V}_{itz}/2)\right)\frac{\partial \widetilde{m}_{itz}}{\partial \hat{\alpha}_{isz}}
+\end{align}
+The forward recurrence is
+\begin{align}
+	\frac{\partial \bm{{m}_{it}}}{\partial \bm{\hat{\alpha}_{is}}} &= 
+	\left[ I-\left(\bm V_{i, t-1} + \sigma^2I\right) \left(\bm V_{i, t-1} + \sigma^2I+\hat\nu_{it}^2I\right)^{-1} \right] 	\frac{\partial \bm{m_{i,t-1}}}{\partial \bm{\hat{\alpha}_{is}}} \\
+	&\quad +  \left(\bm V_{i, t-1} + \sigma^2I\right) \left(\bm V_{i, t-1} + \sigma^2I+\hat\nu_{it}^2I\right)^{-1} \delta_{st}
+	\intertext{where $\delta_{st}=1$ if $s=t$ and 0 otherwise with the initial condition $\partial\bm{m_{i0}}/\partial \bm{\hat{\alpha}_{is}}=\bm{0}$. Then the backward recurrence is}
+	\frac{\partial \bm{\widetilde{m}_{i,t-1}}}{\partial \bm{\hat{\alpha}_{is}}} &= 
+	 \left[I - \bm V_{i,t-1}\left( \bm V_{i,t-1} + \sigma^2 I \right)^{-1} \right]\frac{\partial \bm m_{i,t-1} }{\partial \bm{\hat{\alpha}_{is}}}
+	 + \bm V_{i,t-1}\left( \bm V_{i,t-1} + \sigma^2 I \right)^{-1} \frac{\partial \widetilde{\bm m}_{i,t}}{\partial \bm{\hat{\alpha}_{is}}}
+\end{align}
+with the initial condition $\partial \bm{\widetilde{m}_{i\overline{T_i}}}/\partial \bm{\hat{\alpha}_{is}} = \partial \bm{{m}_{i\overline{T_i}}}/\partial \bm{\hat{\alpha}_{is}}$
+
+In practice, we need to (exactly) update $\bm{\alpha_{it}}$ so that we can update other parameters in the next iteration. Hence, we set $\widetilde{\bm m}_{it}$ as an estimator of $\bm{\alpha_{it}}$.
+
+\newpage
+\section{Discussion}
+
+\subsection{How to compute $\mathbb{E}_{f} \left[\pi(\alpha_{itz})\right]$}
+\label{Esoft}
+In the second term of equation (\ref{eq:0}), we approximate the expectation of the softmax transform of normal variable. Oberving that $\pi(\alpha_{itz}) = \frac{1}{2-k + \sum_{z^\prime \neq z} \frac{1}{\\sigma(\alpha_{itz}-\alpha_{itz^\prime})}}$, we first propose an approximation of $\mathbb{E}_{f} \left[\pi(\alpha_{itz})\right] \approx \frac{1}{2-k + \sum_{z^\prime \neq z} \frac{1}{\mathbb{E}_{f}[\sigma(\alpha_{itz}-\alpha_{itz^\prime})]}}$. Then, we approximate $\mathbb{E}_{f}[\sigma(\alpha_{itz}-\alpha_{itz^\prime})]$ with $\sigma\left(\frac{\widetilde{m}_{itz}-\widetilde{m}_{itz^\prime}}{1+\pi\left(\widetilde{V}_{itz}+\widetilde{V}_{itz^\prime}\right)/8}\right)$ using the approximation of expected value of sigmoid transform of a normal variable. Related materials:
+\begin{itemize}
+\item https://stats.stackexchange.com/questions/315476/expected-value-of-softmax-transformation-of-gaussian-random-vector
+\item https://stats.stackexchange.com/questions/321947/expectation-of-the-softmax-transform-for-gaussian-multivariate-variables
+\item https://arxiv.org/pdf/1703.00091.pdf
+\item http://eelxpeng.github.io/blog/2017/03/10/Tricks-of-Sigmoid-Function
+\end{itemize}
+
+\subsection{How to fix $\bm{\alpha}$}
+Recall that we need to fix $\bm{\alpha_{it}}$ while updating other parameters in the step 1 to 3. Since we are only computing $\widetilde{\bm m}_{it}$ in practice, we use this as an estimator of $\bm{\alpha_{it}}$.
+In fact, Imai, Lo and Olmsted (2016) also use $\mathbb{E}[\textit{ideal point}_{it}]$ to update the latent propensity $q(y^*_{ijt})$ (see appendix of the paper for more details). We may (or may not) need further explanation to justify such estimator.
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
