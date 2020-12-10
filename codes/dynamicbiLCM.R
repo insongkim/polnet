@@ -39,7 +39,11 @@ random.dynamic.biLCM <- function(## Data size
                                  beta_c = rep(0.5, n),
                                  
                                  ## random seed
-                                 true_seed = 1
+                                 true_seed = 1,
+                                 
+                                 ## simple
+                                 simple = F,
+                                 dominant.beta = F # only works when simple = T
                                  ) {
   
   set.seed(true_seed)
@@ -49,7 +53,11 @@ random.dynamic.biLCM <- function(## Data size
   # #-- b: rate parameter to generate kappa (+real)
   # a = 2
   # b = 0.5
-  kappa = matrix(rgamma(k*s, shape = a, rate = b), k, s)
+  if (simple) {
+    kappa = matrix(sample(c(1,3,5,7), size = k*s, replace = T), k, s)
+  } else {
+    kappa = matrix(rgamma(k*s, shape = a, rate = b), k, s)
+  }
   # softmax(alpha): member state i's involvement in communities at time t (mxsxk array; +real)
   #-- state-space model: a_it | a_i,t-1 ~ N(a_i,t-1, sigma^2 I)
   alpha = array(NA, dim = c(m,s,k))
@@ -65,8 +73,19 @@ random.dynamic.biLCM <- function(## Data size
   # #-- beta_c: concentration vector to generate beta membership (vector of legnth m; +real)
   # beta_c = rep(0.5, n)
   beta = array(NA, dim = c(n,s,k))
-  for (t in 1:s) {
-    beta[,t,] = t(rdirichlet(k, beta_c))
+  if (simple) {
+    for (t in 1:s) {
+      if (dominant.beta) {
+        beta[,t,] = matrix(sample(c(0.1,0.2,3), size = k*n, replace = T), n, k)
+      } else {
+        beta[,t,] = matrix(sample(c(1,2,3), size = k*n, replace = T), n, k)
+      }
+      beta[,t,] = beta[,t,]/matrix(colSums(beta[,t,]), n, k, byrow = T)
+    }
+  } else {
+    for (t in 1:s) {
+      beta[,t,] = t(rdirichlet(k, beta_c))
+    }
   }
   
   ## Data
@@ -130,7 +149,13 @@ dynamic.biLCM <- function(## Data
                           # fixed mi0 = 0 and Vi0 = I
                           kappa = NULL,
                           alpha = NULL,
-                          beta = NULL
+                          beta = NULL,
+                          
+                          ## debugging
+                          kappa.fix.true = NULL,
+                          alpha.fix.true = NULL,
+                          beta.fix.true = NULL,
+                          softmax.beta = F
                           ) {
   ## Data size
   # # number of community = length of z (+int)
@@ -328,107 +353,123 @@ dynamic.biLCM <- function(## Data
     }
     
     # Step 2: Update kappa ----------------------------------------------------
-    for (t in 1:s) {
-      numer <- sapply(1:k, function(z) sum(A[,,t] * q[,,t,z]))
-      kappa[,t] <- numer
-      # denom. always sums to 1: sapply(1:k, function(z) sum(outer(softmax_alpha[,t,z], beta[,t,z], "*")))
+    if (is.null(kappa.fix.true)) {
+      for (t in 1:s) {
+        numer <- sapply(1:k, function(z) sum(A[,,t] * q[,,t,z]))
+        kappa[,t] <- numer
+        # denom. always sums to 1: sapply(1:k, function(z) sum(outer(softmax_alpha[,t,z], beta[,t,z], "*")))
+      }
+    } else {
+      kappa = kappa.fix.true
     }
     
     # Step 3: Update beta -----------------------------------------------------
-    for (t in 1:s) {
-      log_numer <- log(sapply(1:k, function(z) colSums(A[,,t] * q[,,t,z])))
-      log_numer[which(is.infinite(log_numer))] <- -1.797693e+308
-      log_denom <- log(sapply(1:k, function(z) sum(A[,,t] * q[,,t,z])))
-      log_denom[which(is.infinite(log_denom))] <- -1.797693e+308
-      beta[,t,] <- exp(sweep(log_numer, 2, log_denom, "-"))
+    if (is.null(beta.fix.true)) {
+      for (t in 1:s) {
+        log_numer <- log(sapply(1:k, function(z) colSums(A[,,t] * q[,,t,z])))
+        log_numer[which(is.infinite(log_numer))] <- -1.797693e+308
+        log_denom <- log(sapply(1:k, function(z) sum(A[,,t] * q[,,t,z])))
+        log_denom[which(is.infinite(log_denom))] <- -1.797693e+308
+        beta[,t,] <- exp(sweep(log_numer, 2, log_denom, "-"))
+        # softmax
+        if (softmax.beta) {
+          beta = apply(beta, c(2,3), softmax)
+        }
+      }
+    } else {
+      beta = beta.fix.true
     }
     
     # Step 4: Update alpha ----------------------------------------------------
-    # 4-1: Compute m, V, \tilde m, \tilde V (forward/backward)
-    #-- forward
-    for (i in 1:m) {
-      P1 = V0[i,,]+Sigma
-      P2 = P1%*%solve(P1+Nu)
-      P3 = I-P2
-      M[i,1,] = P3%*%M0[i,] + P2%*%alpha_hat[i,1,]
-      V[i,1,,] = P3%*%P1
-    }
-    for (t in 2:s) {
+    if (is.null(alpha.fix.true)) {
+      # 4-1: Compute m, V, \tilde m, \tilde V (forward/backward)
+      #-- forward
       for (i in 1:m) {
-        P1 = V[i,t-1,,]+Sigma
+        P1 = V0[i,,]+Sigma
         P2 = P1%*%solve(P1+Nu)
         P3 = I-P2
-        M[i,t,] = P3%*%M[i,t-1,] + P2%*%alpha_hat[i,t,]
-        V[i,t,,] = P3%*%P1
+        M[i,1,] = P3%*%M0[i,] + P2%*%alpha_hat[i,1,]
+        V[i,1,,] = P3%*%P1
       }
-    }
-    #-- backward
-    M_tilde[,s,] = M[,s,]
-    V_tilde[,s,,] = V[,s,,]
-    for (i in 1:m) {
-      for (t in (s-1):1) {
-        P1 = V[i,t,,] + Sigma
-        P2 = V[i,t,,]%*%solve(P1)
-        M_tilde[i,t,] = (I-P2)%*%M[i,t,] + P2%*%M_tilde[i,t+1,]
-        V_tilde[i,t,,] = V[i,t,,] + P2%*%(V_tilde[i,t+1,,]-P1)%*%t(P2)
-        M_tilde_lag[i,t+1,] = M_tilde[i,t,]
-      }
-      P1 = V0[i,,]+Sigma
-      P2 = V0[i,,]%*%solve(P1)
-      M_tilde_lag[i,1,] = (I-P2)%*%M0[i,] + P2%*%M_tilde[i,1,]
-    }
-    
-    # 4-2: Update variational parameter zeta_hat
-    for (t in 1:s) {
-      for (z in 1:k) {
-        zeta_hat[t,z] = sum(exp(M_tilde[,t,z]+V_tilde[,t,z,z]/2))
-      }
-    }
-    
-    # 4-3: Update variational parameter alpha_hat (forward/backward -> compute derivative -> old + stepsize*derivative)
-    #-- forward: \partial m/\partial alpha_hat
-    for (i in 1:m) {
-      for (t1 in 2:s) {
-        for (t2 in 1:s) {
+      for (t in 2:s) {
+        for (i in 1:m) {
           P1 = V[i,t-1,,]+Sigma
           P2 = P1%*%solve(P1+Nu)
           P3 = I-P2
-          der_for[i,t1,t2,,] = P3%*%der_for[i,t1-1,t2,,] + P2*delta[t2,t1]
+          M[i,t,] = P3%*%M[i,t-1,] + P2%*%alpha_hat[i,t,]
+          V[i,t,,] = P3%*%P1
         }
       }
-    }
-    #-- backward: \partial m_tilde/\partial alpha_hat
-    for (i in 1:m) {
-      for (t1 in (s-1):1) {
-        for (t2 in 1:s) {
-          P1 = V[i,t1,,] + Sigma
-          P2 = V[i,t1,,]%*%solve(P1)
-          der_back[i,t1,t2,,] = (I-P2)%*%der_for[i,t1,t2,,] + P2%*%der_back[i,t1+1,t2,,]
-          der_back_lag[i,t1+1,t2,,] = der_back[i,t1,t2,,]
+      #-- backward
+      M_tilde[,s,] = M[,s,]
+      V_tilde[,s,,] = V[,s,,]
+      for (i in 1:m) {
+        for (t in (s-1):1) {
+          P1 = V[i,t,,] + Sigma
+          P2 = V[i,t,,]%*%solve(P1)
+          M_tilde[i,t,] = (I-P2)%*%M[i,t,] + P2%*%M_tilde[i,t+1,]
+          V_tilde[i,t,,] = V[i,t,,] + P2%*%(V_tilde[i,t+1,,]-P1)%*%t(P2)
+          M_tilde_lag[i,t+1,] = M_tilde[i,t,]
         }
-        for (t2 in 1:s) {
-          P1 = V0[i,,]+Sigma
-          P2 = V0[i,,]%*%solve(P1)
-          der_back_lag[i,1,t2,,] = P2%*%der_back[i,1,t2,,]
-        }
+        P1 = V0[i,,]+Sigma
+        P2 = V0[i,,]%*%solve(P1)
+        M_tilde_lag[i,1,] = (I-P2)%*%M0[i,] + P2%*%M_tilde[i,1,]
       }
-    }
-    # compute derivative
-    for (i in 1:m) {
-      for (t2 in 1:s) {
+      
+      # 4-2: Update variational parameter zeta_hat
+      for (t in 1:s) {
         for (z in 1:k) {
-          der[i,t2,z] = -(1/sigma^2)*(M_tilde[i,,z] - M_tilde_lag[i,,z])%*%(der_back[i,,t2,z,z] - der_back_lag[i,,t2,z,z]) -
-            colSums(A[i,,]*q[i,,,z] - t((t(apply(A[,,]*q[,,,z], c(2,3), sum)) * 1/zeta_hat[,z]) * colSums(exp(M_tilde[,,z] + V_tilde[,,z,z]/2)))) %*% der_back[i,,t2,z,z]
+          zeta_hat[t,z] = sum(exp(M_tilde[,t,z]+V_tilde[,t,z,z]/2))
         }
       }
+      
+      # 4-3: Update variational parameter alpha_hat (forward/backward -> compute derivative -> old + stepsize*derivative)
+      #-- forward: \partial m/\partial alpha_hat
+      for (i in 1:m) {
+        for (t1 in 2:s) {
+          for (t2 in 1:s) {
+            P1 = V[i,t-1,,]+Sigma
+            P2 = P1%*%solve(P1+Nu)
+            P3 = I-P2
+            der_for[i,t1,t2,,] = P3%*%der_for[i,t1-1,t2,,] + P2*delta[t2,t1]
+          }
+        }
+      }
+      #-- backward: \partial m_tilde/\partial alpha_hat
+      for (i in 1:m) {
+        for (t1 in (s-1):1) {
+          for (t2 in 1:s) {
+            P1 = V[i,t1,,] + Sigma
+            P2 = V[i,t1,,]%*%solve(P1)
+            der_back[i,t1,t2,,] = (I-P2)%*%der_for[i,t1,t2,,] + P2%*%der_back[i,t1+1,t2,,]
+            der_back_lag[i,t1+1,t2,,] = der_back[i,t1,t2,,]
+          }
+          for (t2 in 1:s) {
+            P1 = V0[i,,]+Sigma
+            P2 = V0[i,,]%*%solve(P1)
+            der_back_lag[i,1,t2,,] = P2%*%der_back[i,1,t2,,]
+          }
+        }
+      }
+      # compute derivative
+      for (i in 1:m) {
+        for (t2 in 1:s) {
+          for (z in 1:k) {
+            der[i,t2,z] = -(1/sigma^2)*(M_tilde[i,,z] - M_tilde_lag[i,,z])%*%(der_back[i,,t2,z,z] - der_back_lag[i,,t2,z,z]) -
+              colSums(A[i,,]*q[i,,,z] - t((t(apply(A[,,]*q[,,,z], c(2,3), sum)) * 1/zeta_hat[,z]) * colSums(exp(M_tilde[,,z] + V_tilde[,,z,z]/2)))) %*% der_back[i,,t2,z,z]
+          }
+        }
+      }
+      # old + stepsize*derivative
+      alpha_hat = alpha_hat + r*der
+      
+      # 4-4: alpha = \tilde m
+      alpha = M_tilde
+      softmax_alpha = apply(alpha, c(2,3), softmax)
+    } else {
+      alpha = alpha.fix.true
+      softmax_alpha = apply(alpha, c(2,3), softmax)
     }
-    # old + stepsize*derivative
-    alpha_hat = alpha_hat + r*der
-    
-    # 4-4: alpha = \tilde m
-    alpha = M_tilde
-    softmax_alpha = apply(alpha, c(2,3), softmax)
-    
     # Compute log-likelihood --------------------------------------------------
     for (t in 1:s) {
       kab[,,t] = sweep(softmax_alpha[,t,], 2, kappa[,t], "*") %*% t(beta[,t,])
@@ -445,7 +486,7 @@ dynamic.biLCM <- function(## Data
     if (llik_new - llik_old < tolerance || n_iter == max_iter) break
     llik_old <- llik_new
   }
-  out <- list(loglikelihood = llik, kappa = kappa, alpha = alpha, softmax_alpha = softmax_alpha, beta = beta)
+  out <- list(loglikelihood = llik, kappa = kappa, alpha = alpha, softmax_alpha = softmax_alpha, beta = beta, q = q)
 }
 
 
